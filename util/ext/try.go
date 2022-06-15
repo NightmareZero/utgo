@@ -1,4 +1,4 @@
-package pan
+package ext
 
 import (
 	"github.com/NightmareZero/m-go-starter/util/log"
