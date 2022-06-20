@@ -1,7 +1,8 @@
 package ext
 
 import (
-	"github.com/NightmareZero/m-go-starter/util/log"
+	"fmt"
+
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -39,6 +40,6 @@ func Recover(msg string, goAfterRecover func(err error)) {
 			goAfterRecover(err)
 		})
 	} else {
-		log.Error("%+v\n", zap.Error(err))
+		fmt.Printf("%+v\n", zap.Error(err))
 	}
 }

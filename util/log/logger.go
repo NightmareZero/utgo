@@ -67,15 +67,15 @@ func Panicf(msg string, fields ...any) {
 	logger.Sugar().Panicf(msg, fields...)
 }
 
-func Init() {
+func Init(sync bool) {
 	// init logger encoderConfig
 	eConfig := zap.NewDevelopmentConfig().EncoderConfig
 	eConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 
 	// init logger output file
-	logWriter := zapcore.AddSync(getWriter("./log", "log"))
+	logWriter := zapcore.AddSync(getWriter(sync, "./log", "log"))
 	// init error logger output file
-	errorLogWriter := zapcore.AddSync(getWriter("./err", "log"))
+	errorLogWriter := zapcore.AddSync(getWriter(sync, "./err", "log"))
 
 	tee := zapcore.NewTee(
 		zapcore.NewCore(
