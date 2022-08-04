@@ -1,4 +1,4 @@
-package common
+package uos
 
 const (
 	PATH_DELIMITER = "\\"
