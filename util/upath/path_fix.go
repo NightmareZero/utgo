@@ -3,7 +3,7 @@ package upath
 import (
 	"strings"
 
-	"github.com/NightmareZero/m-go-starter/util/uconst"
+	"github.com/NightmareZero/nzgoutil/util/uconst"
 )
 
 // 如果末尾没有斜杠，则添加斜杠

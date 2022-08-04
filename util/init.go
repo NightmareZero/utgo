@@ -1,6 +1,6 @@
 package common
 
-import "github.com/NightmareZero/m-go-starter/util/log"
+import "github.com/NightmareZero/nzgoutil/util/log"
 
 // 默认值初始化
 func InitDefault() {

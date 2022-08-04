@@ -1,4 +1,4 @@
-module github.com/NightmareZero/m-go-starter
+module github.com/NightmareZero/nzgoutil
 
 go 1.18
 

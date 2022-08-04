@@ -6,7 +6,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/NightmareZero/m-go-starter/util/upath"
+	"github.com/NightmareZero/nzgoutil/util/upath"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 )
 
