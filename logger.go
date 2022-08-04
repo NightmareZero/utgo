@@ -1,4 +1,4 @@
-package log
+package nzgoutil
 
 import (
 	"go.uber.org/zap"
@@ -67,7 +67,7 @@ func Panicf(msg string, fields ...any) {
 	logger.Sugar().Panicf(msg, fields...)
 }
 
-func Init(sync bool) {
+func InitLog(sync bool) {
 	// init logger encoderConfig
 	eConfig := zap.NewDevelopmentConfig().EncoderConfig
 	eConfig.EncodeTime = zapcore.ISO8601TimeEncoder
@@ -86,7 +86,6 @@ func Init(sync bool) {
 			errorLogWriter, zap.ErrorLevel),
 	)
 	logger = zap.New(tee)
-
 }
 
 type LogNormalLevel struct {

@@ -1,4 +1,4 @@
-package ext
+package common
 
 import (
 	"fmt"

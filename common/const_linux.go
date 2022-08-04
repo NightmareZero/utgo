@@ -1,4 +1,4 @@
-package uconst
+package common
 
 const (
 	PATH_DELIMITER = "/"

@@ -1,4 +1,4 @@
-package ext
+package common
 
 // 伪三元表达式
 func If[T any](condition bool, trueVal, falseVal T) T {

@@ -1,4 +1,4 @@
-package log
+package nzgoutil
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"io"
 	"time"
 
-	"github.com/NightmareZero/nzgoutil/util/upath"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 )
 
@@ -28,7 +27,7 @@ func getWriterSync(logPath string, name string) io.Writer {
 	// 生成rotatelogs的Logger 实际生成的文件名 demo.log.YYmmddHH
 	// 保存30天内的日志，每天分割一次日志
 	hook, err := rotatelogs.New(
-		upath.FixPathSlash(logPath)+name+"-%Y%m%d.log",
+		FixPathSlash(logPath)+name+"-%Y%m%d.log",
 		rotatelogs.WithMaxAge(30*time.Hour*24),      // 保留30天
 		rotatelogs.WithRotationTime(1*time.Hour*24), // 每天一次
 		rotatelogs.WithRotationSize(3*1024*1024),    // 最长为3m
@@ -47,7 +46,7 @@ func getWriterAsync(logPath string, name string) io.Writer {
 }
 
 // 异步日志写入工具
-type AsyncWriter struct {
+type asyncWriter struct {
 	syncLogger io.Writer
 	ch         chan []byte
 	ctx        context.Context
@@ -57,7 +56,7 @@ type AsyncWriter struct {
 
 // 异步写入数据
 // @Override
-func (a *AsyncWriter) Write(b []byte) (int, error) {
+func (a *asyncWriter) Write(b []byte) (int, error) {
 	select {
 	case <-a.ctx.Done():
 		return 0, errors.New("writer is closed")
@@ -69,7 +68,7 @@ func (a *AsyncWriter) Write(b []byte) (int, error) {
 
 // 关闭通道
 // @Override
-func (a *AsyncWriter) Close() error {
+func (a *asyncWriter) Close() error {
 	a.cf()
 	return nil
 }
@@ -77,7 +76,7 @@ func (a *AsyncWriter) Close() error {
 // 新建异步写入通道
 // newAsyncWriter
 func newAsyncWriter(logPath string, name string) io.WriteCloser {
-	var w = &AsyncWriter{}
+	var w = &asyncWriter{}
 	w.ch = make(chan []byte, 1024)
 	w.syncLogger = getWriterSync(logPath, name)
 	w.ctx, w.cf = context.WithCancel(context.Background())
