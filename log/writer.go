@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"io"
+	"strings"
 	"time"
 
+	"github.com/NightmareZero/nzgoutil/common"
 	"github.com/NightmareZero/nzgoutil/uos"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 )
@@ -58,12 +60,25 @@ type asyncWriter struct {
 // 异步写入数据
 // @Override
 func (a *asyncWriter) Write(b []byte) (int, error) {
+	builder := strings.Builder{}
+	go common.Try(func() {
+		t := time.NewTicker(100 * time.Millisecond)
+		for {
+			select {
+			case <-a.ctx.Done():
+				return
+			case <-t.C:
+				a.ch <- []byte(builder.String())
+				builder.Reset()
+			}
+		}
+	})
+
 	select {
 	case <-a.ctx.Done():
 		return 0, errors.New("writer is closed")
 	default:
-		a.ch <- b
-		return len(b), a.err
+		return builder.Write(b)
 	}
 }
 
