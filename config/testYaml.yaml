@@ -1,0 +1,6 @@
+str: str
+number: 3
+obj:
+  array:
+    - '1'
+    - '2'
