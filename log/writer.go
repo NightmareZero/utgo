@@ -68,8 +68,10 @@ func (a *asyncWriter) Write(b []byte) (int, error) {
 			case <-a.ctx.Done():
 				return
 			case <-t.C:
-				a.ch <- []byte(builder.String())
-				builder.Reset()
+				if builder.Len() > 0 {
+					a.ch <- []byte(builder.String())
+					builder.Reset()
+				}
 			}
 		}
 	})
