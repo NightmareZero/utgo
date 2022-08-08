@@ -79,23 +79,44 @@ func InitWithConfig(config LogConfig) {
 	}
 	eConfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 
+	var core zapcore.Core
+
+	if !config.MergeErrorLog {
+		core = newMultiCoreLogger(config, eConfig)
+	} else {
+		core = newSingleCoreLogger(config, eConfig)
+	}
+
+	defaultLogger = zap.New(core)
+}
+
+func newSingleCoreLogger(config LogConfig, eConfig zap.Config) zapcore.Core {
 	fixedPath := uos.FixPathEndSlash(common.If(len(config.Path) > 0, config.Path, "./log/"))
-	fixedErrPath := uos.FixPathEndSlash(common.If(len(config.ErrPath) > 0, config.ErrPath, fixedPath))
 
 	// init logger output file
 	logWriter := zapcore.AddSync(getWriter(config.Sync, fixedPath, "log"))
+
+	return zapcore.NewCore(
+		zapcore.NewConsoleEncoder(eConfig.EncoderConfig),
+		logWriter, config.Level)
+}
+
+func newMultiCoreLogger(config LogConfig, eConfig zap.Config) zapcore.Core {
+	fixedPath := uos.FixPathEndSlash(common.If(len(config.Path) > 0, config.Path, "./log/"))
+
+	// init logger output file
+	logWriter := zapcore.AddSync(getWriter(config.Sync, fixedPath, "log"))
+	fixedErrPath := uos.FixPathEndSlash(common.If(len(config.ErrPath) > 0, config.ErrPath, "./log/"))
 	// init error logger output file
 	errorLogWriter := zapcore.AddSync(getWriter(config.Sync, fixedErrPath, "err"))
-
-	tee := zapcore.NewTee(
+	return zapcore.NewTee(
 		zapcore.NewCore(
 			zapcore.NewConsoleEncoder(eConfig.EncoderConfig),
-			logWriter, LogNormalLevel{config.Level}),
+			logWriter, LogNormalLevel{config.Level, config.MergeErrorLog}),
 		zapcore.NewCore(
 			zapcore.NewConsoleEncoder(eConfig.EncoderConfig),
 			errorLogWriter, zap.ErrorLevel),
 	)
-	defaultLogger = zap.New(tee)
 }
 
 func InitLog(sync bool) {
@@ -106,17 +127,19 @@ func InitLog(sync bool) {
 }
 
 type LogNormalLevel struct {
-	Level zapcore.Level
+	Level         zapcore.Level
+	MergeErrorLog bool
 }
 
 func (e LogNormalLevel) Enabled(lvl zapcore.Level) bool {
-	return e.Level <= lvl && lvl < zap.ErrorLevel
+	return e.Level <= lvl && (!e.MergeErrorLog || lvl < zap.ErrorLevel)
 }
 
 type LogConfig struct {
-	Sync    bool
-	Path    string
-	ErrPath string
-	Level   zapcore.Level
-	Dev     bool
+	Sync          bool
+	Path          string
+	MergeErrorLog bool
+	ErrPath       string
+	Level         zapcore.Level
+	Dev           bool
 }
