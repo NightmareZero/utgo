@@ -71,8 +71,13 @@ func Panicf(msg string, fields ...any) {
 
 func InitWithConfig(config LogConfig) {
 	// init logger encoderConfig
-	eConfig := zap.NewDevelopmentConfig().EncoderConfig
-	eConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	var eConfig zap.Config
+	if config.Dev {
+		eConfig = zap.NewDevelopmentConfig()
+	} else {
+		eConfig = zap.NewProductionConfig()
+	}
+	eConfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 
 	fixedPath := uos.FixPathEndSlash(common.If(len(config.Path) > 0, config.Path, "./log/"))
 	fixedErrPath := uos.FixPathEndSlash(common.If(len(config.ErrPath) > 0, config.ErrPath, fixedPath))
@@ -84,20 +89,19 @@ func InitWithConfig(config LogConfig) {
 
 	tee := zapcore.NewTee(
 		zapcore.NewCore(
-			zapcore.NewConsoleEncoder(eConfig),
+			zapcore.NewConsoleEncoder(eConfig.EncoderConfig),
 			logWriter, LogNormalLevel{config.Level}),
 		zapcore.NewCore(
-			zapcore.NewConsoleEncoder(eConfig),
+			zapcore.NewConsoleEncoder(eConfig.EncoderConfig),
 			errorLogWriter, zap.ErrorLevel),
 	)
-	defaultLogger = zap.New(tee).WithOptions()
+	defaultLogger = zap.New(tee)
 }
 
 func InitLog(sync bool) {
 	InitWithConfig(LogConfig{
 		Sync:  sync,
 		Level: zapcore.InfoLevel,
-		Path:  "",
 	})
 }
 
@@ -114,4 +118,5 @@ type LogConfig struct {
 	Path    string
 	ErrPath string
 	Level   zapcore.Level
+	Dev     bool
 }
