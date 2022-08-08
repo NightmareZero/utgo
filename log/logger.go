@@ -1,6 +1,8 @@
 package log
 
 import (
+	"github.com/NightmareZero/nzgoutil/common"
+	"github.com/NightmareZero/nzgoutil/uos"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -67,30 +69,49 @@ func Panicf(msg string, fields ...any) {
 	defaultLogger.Sugar().Panicf(msg, fields...)
 }
 
-func InitLog(sync bool) {
+func InitWithConfig(config LogConfig) {
 	// init logger encoderConfig
 	eConfig := zap.NewDevelopmentConfig().EncoderConfig
 	eConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 
+	fixedPath := uos.FixPathEndSlash(common.If(len(config.Path) > 0, config.Path, "./log/"))
+	fixedErrPath := uos.FixPathEndSlash(common.If(len(config.ErrPath) > 0, config.ErrPath, fixedPath))
+
 	// init logger output file
-	logWriter := zapcore.AddSync(getWriter(sync, "./log", "log"))
+	logWriter := zapcore.AddSync(getWriter(config.Sync, fixedPath, "log"))
 	// init error logger output file
-	errorLogWriter := zapcore.AddSync(getWriter(sync, "./err", "log"))
+	errorLogWriter := zapcore.AddSync(getWriter(config.Sync, fixedErrPath, "err"))
 
 	tee := zapcore.NewTee(
 		zapcore.NewCore(
 			zapcore.NewConsoleEncoder(eConfig),
-			logWriter, LogNormalLevel{}),
+			logWriter, LogNormalLevel{config.Level}),
 		zapcore.NewCore(
 			zapcore.NewConsoleEncoder(eConfig),
 			errorLogWriter, zap.ErrorLevel),
 	)
-	defaultLogger = zap.New(tee)
+	defaultLogger = zap.New(tee).WithOptions()
+}
+
+func InitLog(sync bool) {
+	InitWithConfig(LogConfig{
+		Sync:  sync,
+		Level: zapcore.InfoLevel,
+		Path:  "",
+	})
 }
 
 type LogNormalLevel struct {
+	Level zapcore.Level
 }
 
 func (e LogNormalLevel) Enabled(lvl zapcore.Level) bool {
-	return lvl < zap.ErrorLevel
+	return e.Level <= lvl && lvl < zap.ErrorLevel
+}
+
+type LogConfig struct {
+	Sync    bool
+	Path    string
+	ErrPath string
+	Level   zapcore.Level
 }
