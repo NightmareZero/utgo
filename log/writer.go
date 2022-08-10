@@ -1,15 +1,12 @@
 package log
 
 import (
-	"context"
-	"errors"
 	"io"
-	"strings"
 	"time"
 
-	"github.com/NightmareZero/nzgoutil/common"
 	"github.com/NightmareZero/nzgoutil/uos"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
+	"go.uber.org/zap/zapcore"
 )
 
 // 获取日志写入工具
@@ -45,72 +42,9 @@ func getWriterSync(logPath string, name string) io.Writer {
 // @param logPath 日志文件路径
 // @param name 文件名前缀
 func getWriterAsync(logPath string, name string) io.Writer {
-	return newAsyncWriter(logPath, name)
-}
-
-// 异步日志写入工具
-type asyncWriter struct {
-	syncLogger io.Writer
-	ch         chan []byte
-	ctx        context.Context
-	cf         context.CancelFunc
-	err        error
-}
-
-// 异步写入数据
-// @Override
-func (a *asyncWriter) Write(b []byte) (int, error) {
-	builder := strings.Builder{}
-	go common.Try(func() {
-		t := time.NewTicker(100 * time.Millisecond)
-		for {
-			select {
-			case <-a.ctx.Done():
-				return
-			case <-t.C:
-				if builder.Len() > 0 {
-					a.ch <- []byte(builder.String())
-					builder.Reset()
-				}
-			}
-		}
-	})
-
-	select {
-	case <-a.ctx.Done():
-		return 0, errors.New("writer is closed")
-	default:
-		return builder.Write(b)
+	bws := zapcore.BufferedWriteSyncer{
+		WS:            zapcore.AddSync(getWriterSync(logPath, name)),
+		FlushInterval: 5 * time.Second,
 	}
-}
-
-// 关闭通道
-// @Override
-func (a *asyncWriter) Close() error {
-	a.cf()
-	return nil
-}
-
-// 新建异步写入通道
-// newAsyncWriter
-func newAsyncWriter(logPath string, name string) io.WriteCloser {
-	var w = &asyncWriter{}
-	w.ch = make(chan []byte, 1024)
-	w.syncLogger = getWriterSync(logPath, name)
-	w.ctx, w.cf = context.WithCancel(context.Background())
-	go func() {
-		for {
-			select {
-			case <-w.ctx.Done():
-				return
-			case b1 := <-w.ch:
-				_, err := w.syncLogger.Write(b1)
-				if err != nil {
-					w.err = err
-				}
-			}
-		}
-	}()
-
-	return w
+	return &bws
 }
