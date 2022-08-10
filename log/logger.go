@@ -1,6 +1,8 @@
 package log
 
 import (
+	"os"
+
 	"github.com/NightmareZero/nzgoutil/common"
 	"github.com/NightmareZero/nzgoutil/uos"
 	"go.uber.org/zap"
@@ -17,46 +19,40 @@ func InitWithConfig(config LogConfig) {
 	}
 	eConfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 
-	var core zapcore.Core
+	cores := getZapCores(config, eConfig)
 
+	defaultLogger = zap.New(zapcore.NewTee(cores...))
+}
+
+func getZapCores(config LogConfig, eConfig zap.Config) (ret []zapcore.Core) {
+	fixedPath := uos.FixPathEndSlash(common.If(len(config.Path) > 0, config.Path, "./log/"))
+
+	// 初始化 log 文件输出
+	logWriter := zapcore.AddSync(getFileWriter(config.Sync, fixedPath, "log"))
+	ret = append(ret, zapcore.NewCore(
+		zapcore.NewConsoleEncoder(eConfig.EncoderConfig),
+		logWriter, LogNormalLevel{config.Level, config.MergeErrorLog}))
+
+	// 如果未开启日志合并
 	if !config.MergeErrorLog {
-		core = newMultiCoreLogger(config, eConfig)
-	} else {
-		core = newSingleCoreLogger(config, eConfig)
+		fixedErrPath := uos.FixPathEndSlash(common.If(len(config.ErrPath) > 0, config.ErrPath, "./log/"))
+		errorLogWriter := zapcore.AddSync(getFileWriter(config.Sync, fixedErrPath, "err"))
+		ret = append(ret, zapcore.NewCore(
+			zapcore.NewConsoleEncoder(eConfig.EncoderConfig),
+			errorLogWriter, zap.ErrorLevel))
 	}
 
-	defaultLogger = zap.New(core)
-}
-
-// 生成 info,error 合并 的日志文件写入
-func newSingleCoreLogger(config LogConfig, eConfig zap.Config) zapcore.Core {
-	fixedPath := uos.FixPathEndSlash(common.If(len(config.Path) > 0, config.Path, "./log/"))
-
-	// init logger output file
-	logWriter := zapcore.AddSync(getWriter(config.Sync, fixedPath, "log"))
-
-	return zapcore.NewCore(
-		zapcore.NewConsoleEncoder(eConfig.EncoderConfig),
-		logWriter, config.Level)
-}
-
-// 生成 info,error 分离 的日志文件写入
-func newMultiCoreLogger(config LogConfig, eConfig zap.Config) zapcore.Core {
-	fixedPath := uos.FixPathEndSlash(common.If(len(config.Path) > 0, config.Path, "./log/"))
-
-	// init logger output file
-	logWriter := zapcore.AddSync(getWriter(config.Sync, fixedPath, "log"))
-	fixedErrPath := uos.FixPathEndSlash(common.If(len(config.ErrPath) > 0, config.ErrPath, "./log/"))
-	// init error logger output file
-	errorLogWriter := zapcore.AddSync(getWriter(config.Sync, fixedErrPath, "err"))
-	return zapcore.NewTee(
-		zapcore.NewCore(
+	// 如果开启屏幕输出
+	if config.Console {
+		ret = append(ret, zapcore.NewCore(
 			zapcore.NewConsoleEncoder(eConfig.EncoderConfig),
-			logWriter, LogNormalLevel{config.Level, config.MergeErrorLog}),
-		zapcore.NewCore(
+			os.Stdout, LogNormalLevel{config.Level, false}))
+		ret = append(ret, zapcore.NewCore(
 			zapcore.NewConsoleEncoder(eConfig.EncoderConfig),
-			errorLogWriter, zap.ErrorLevel),
-	)
+			os.Stderr, zap.ErrorLevel))
+	}
+
+	return
 }
 
 func InitLog(level zapcore.Level) {
@@ -72,7 +68,7 @@ type LogNormalLevel struct {
 }
 
 func (e LogNormalLevel) Enabled(lvl zapcore.Level) bool {
-	return e.Level <= lvl && (!e.MergeErrorLog || lvl < zap.ErrorLevel)
+	return e.Level <= lvl && (e.MergeErrorLog || lvl < zap.ErrorLevel)
 }
 
 type LogConfig struct {
@@ -80,6 +76,7 @@ type LogConfig struct {
 	Path          string
 	MergeErrorLog bool
 	ErrPath       string
+	Console       bool
 	Level         zapcore.Level
 	Dev           bool
 }

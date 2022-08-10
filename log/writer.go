@@ -13,7 +13,7 @@ import (
 // @param sync 同步写入?
 // @param logPath 日志文件路径
 // @param name 文件名前缀
-func getWriter(sync bool, logPath string, name string) io.Writer {
+func getFileWriter(sync bool, logPath string, name string) io.Writer {
 	if sync {
 		return getWriterSync(logPath, name)
 	}
