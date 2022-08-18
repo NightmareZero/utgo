@@ -17,7 +17,8 @@ type ConfigType string
 const (
 	Json       ConfigType = "json"
 	Yaml       ConfigType = "yaml"
-	Properties ConfigType = "properties" // 以 '=' 分割的配置文件
+	Properties ConfigType = "properties" // 以 '=' 分割的配置文件 关键字 '=' '#'
+	Ini        ConfigType = "ini"        // 以 '[', ']', '=', ';' 分割的配置文件 关键字 "[]=;"
 )
 
 type Config struct {
@@ -76,6 +77,8 @@ func Parse[T any](content []byte, configType ConfigType, target T) error {
 		return json.Unmarshal(content, &target)
 	case Yaml:
 		return yaml.Unmarshal(content, &target)
+	case Ini:
+		return _iniReader.Unmarshal(content, &target)
 	case Properties:
 		return _propertiesReader.Unmarshal(content, target)
 	}
