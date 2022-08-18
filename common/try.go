@@ -7,6 +7,11 @@ import (
 	"go.uber.org/zap"
 )
 
+type errCodeType interface {
+	uint | uint8 | uint16 | uint32 | uint64 |
+		int | int8 | int16 | int32 | int64
+}
+
 // Try 保护方法运行
 func Try(invoke func()) {
 	// 延迟处理的函数
@@ -34,6 +39,9 @@ func Recover(msg string, goAfterRecover func(err error)) {
 		err = errors.New("panic: " + msg + " , " + ff)
 	case error:
 		err = errors.WithStack(ff)
+	case uint, uint8, uint16, uint32, uint64,
+		int, int8, int16, int32, int64:
+		err = errors.Errorf("panic: error code %v", ff)
 	}
 	if nil != goAfterRecover {
 		Try(func() {
