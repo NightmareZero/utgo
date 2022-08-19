@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/NightmareZero/nzgoutil/common"
+	"github.com/NightmareZero/nzgoutil/config/prop"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 )
@@ -18,7 +19,6 @@ const (
 	Json       ConfigType = "json"
 	Yaml       ConfigType = "yaml"
 	Properties ConfigType = "properties" // 以 '=' 分割的配置文件 关键字 '=' '#'
-	Ini        ConfigType = "ini"        // 以 '[', ']', '=', ';' 分割的配置文件 关键字 "[]=;"
 )
 
 type Config struct {
@@ -77,10 +77,8 @@ func Parse[T any](content []byte, configType ConfigType, target T) error {
 		return json.Unmarshal(content, &target)
 	case Yaml:
 		return yaml.Unmarshal(content, &target)
-	case Ini:
-		return _iniReader.Unmarshal(content, &target)
 	case Properties:
-		return _propertiesReader.Unmarshal(content, target)
+		return prop.Unmarshal(content, target)
 	}
 	return errors.New("Invalid config type")
 }

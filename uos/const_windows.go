@@ -1,6 +1,6 @@
 package uos
 
 const (
-	PATH_DELIMITER = "\\"
-	LINE_WRAPPER   = "\r\n"
+	PATH_DELIMITER = win_path_delimiter
+	LINE_WRAPPER   = win_line_wrapper
 )
