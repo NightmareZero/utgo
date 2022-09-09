@@ -12,11 +12,12 @@ var (
 )
 
 // 生成短id(22个字符)
-func ShortId() string {
+func Uuid22() string {
 	uuid := uuidR16()
 	return base64.RawURLEncoding.EncodeToString(uuid[:])
 }
 
+// 生成不带 '-' 的uuid
 func Uuid32() string {
 	uuid := uuidR16()
 	target := [32]byte{}
