@@ -64,6 +64,9 @@ const (
 )
 
 func getTime() (int64, uint16, error) {
+	timeMu.Lock()
+	defer timeMu.Unlock()
+
 	t := time.Now()
 
 	// If we don't have a clock sequence already, set one.
