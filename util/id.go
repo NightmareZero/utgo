@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
+	"errors"
 	"io"
 )
 
@@ -23,6 +24,18 @@ func UuidV4_22() string {
 func UuidV1_22() string {
 	uuid := uuidV1()
 	return base64.RawURLEncoding.EncodeToString(uuid[:])
+}
+
+func NewSnowflaker(generatorId int64) (*snowflaker, error) {
+	if generatorId < 0 || generatorId > gidLimit {
+		return nil, errors.New("生成器序号过大")
+	}
+	// 生成一个新节点
+	return &snowflaker{
+		time:   0,
+		gid:    generatorId,
+		serial: 0,
+	}, nil
 }
 
 // 生成不带 '-' 的uuid
