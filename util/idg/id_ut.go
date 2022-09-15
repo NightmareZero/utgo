@@ -1,4 +1,4 @@
-package util
+package idg
 
 import (
 	"io"
