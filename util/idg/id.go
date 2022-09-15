@@ -30,7 +30,6 @@ func NewSnowflaker(generatorId int64) (*snowflaker, error) {
 	if generatorId < 0 || generatorId > gidLimit {
 		return nil, errors.New("生成器序号过大")
 	}
-	// 生成一个新节点
 	return &snowflaker{
 		time:   0,
 		gid:    generatorId,
