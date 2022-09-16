@@ -2,10 +2,13 @@ package log
 
 import (
 	"io"
+	"os"
 	"time"
 
+	"github.com/NightmareZero/nzgoutil/common"
 	"github.com/NightmareZero/nzgoutil/uos"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
+	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
@@ -47,4 +50,35 @@ func getWriterAsync(logPath string, name string) io.Writer {
 		FlushInterval: 5 * time.Second,
 	}
 	return &bws
+}
+
+func getZapCores(config LogConfig, eConfig zap.Config) (ret []zapcore.Core) {
+	fixedPath := uos.FixPathEndSlash(common.If(len(config.Path) > 0, config.Path, "./log/"))
+
+	// 初始化 log 文件输出
+	logWriter := zapcore.AddSync(getFileWriter(config.Sync, fixedPath, "log"))
+	ret = append(ret, zapcore.NewCore(
+		zapcore.NewConsoleEncoder(eConfig.EncoderConfig),
+		logWriter, LogNormalLevel{config.Level, config.MergeErrorLog}))
+
+	// 如果未开启日志合并
+	if !config.MergeErrorLog {
+		fixedErrPath := uos.FixPathEndSlash(common.If(len(config.ErrPath) > 0, config.ErrPath, "./log/"))
+		errorLogWriter := zapcore.AddSync(getFileWriter(config.Sync, fixedErrPath, "err"))
+		ret = append(ret, zapcore.NewCore(
+			zapcore.NewConsoleEncoder(eConfig.EncoderConfig),
+			errorLogWriter, zap.ErrorLevel))
+	}
+
+	// 如果开启屏幕输出
+	if config.Console {
+		ret = append(ret, zapcore.NewCore(
+			zapcore.NewConsoleEncoder(eConfig.EncoderConfig),
+			os.Stdout, LogNormalLevel{config.Level, false}))
+		ret = append(ret, zapcore.NewCore(
+			zapcore.NewConsoleEncoder(eConfig.EncoderConfig),
+			os.Stderr, zap.ErrorLevel))
+	}
+
+	return
 }
