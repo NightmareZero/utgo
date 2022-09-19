@@ -9,7 +9,9 @@ import (
 
 type Request http.Request
 
-type Response http.ResponseWriter
+type Response struct {
+	writer http.ResponseWriter
+}
 
 type RequestHandler func(Request, Response)
 
@@ -34,4 +36,30 @@ func (r *Request) Json(target any) error {
 		return fmt.Errorf("error on unmarshal json, %w", err)
 	}
 	return nil
+}
+
+func (r *Response) Status(s int) {
+	r.writer.WriteHeader(s)
+}
+
+func (r *Response) Headers() http.Header {
+	return r.writer.Header()
+}
+
+func (r *Response) Text(txt string) (err error) {
+	r.writer.WriteHeader(http.StatusOK)
+	r.writer.Header().Add("Content-Type", "text/plain")
+	_, err = r.writer.Write([]byte(txt))
+	return
+}
+
+func (r *Response) Json(target any) error {
+	b, err := json.Marshal(target)
+	if err != nil {
+		return fmt.Errorf("error on unmarshal json, %w", err)
+	}
+	r.writer.WriteHeader(http.StatusOK)
+	r.writer.Header().Add("Content-Type", "application/json")
+	_, err = r.writer.Write([]byte(b))
+	return err
 }

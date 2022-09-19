@@ -1,8 +1,10 @@
 package httpserv
 
+import "net/http"
+
 type Middleware struct {
-	BeforeRequest func(Request, Response) bool
-	AfterRequest  func(Request, Response)
+	Before func(Request, Response) bool
+	After  func(Request, Response)
 }
 
 type urlHandler map[string]RequestHandler
@@ -29,10 +31,13 @@ func (u urlHandler) ServeRequest(server *httpServer, request Request, response R
 
 	rh := u[request.Method]
 	if rh == nil {
-		if server.NotFoundHandler != nil {
-			server.NotFoundHandler(request, response)
-		}
+		default405Handler(request, response)
 		return
 	}
 	rh(request, response)
+}
+
+func default405Handler(request Request, response Response) {
+	response.Status(http.StatusMethodNotAllowed)
+	response.Text("method not allowed")
 }
