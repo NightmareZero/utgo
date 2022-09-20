@@ -17,6 +17,8 @@ type Response struct {
 
 type RequestHandler func(Response, Request)
 
+type ErrorHandler func(Response, Request, error)
+
 func (r *Request) Text() (string, error) {
 	defer r.Body.Close()
 	b, err := io.ReadAll(r.Body)
@@ -46,28 +48,20 @@ func (r *Request) Stream(wr io.Writer) (err error) {
 	return
 }
 
-func (r *Response) Status(s int) {
-	r.WriteHeader(s)
-}
-
-func (r *Response) Headers() http.Header {
-	return r.Header()
-}
-
-func (r *Response) Text(txt string) (err error) {
-	r.WriteHeader(http.StatusOK)
-	r.Header().Add("Content-Type", "text/plain")
+func (r *Response) Text(txt string, statusCode int) (err error) {
+	r.WriteHeader(statusCode)
+	r.Header().Add("Content-Type", "text/plain; charset=utf-8")
 	_, err = r.Write([]byte(txt))
 	return
 }
 
-func (r *Response) Json(target any) error {
+func (r *Response) Json(target any, statusCode int) error {
+	r.WriteHeader(statusCode)
 	b, err := json.Marshal(target)
 	if err != nil {
 		return fmt.Errorf("error on unmarshal json, %w", err)
 	}
-	r.WriteHeader(http.StatusOK)
-	r.Header().Add("Content-Type", "application/json")
+	r.Header().Add("Content-Type", "application/json; charset=utf-8")
 	_, err = r.Write([]byte(b))
 	return err
 }

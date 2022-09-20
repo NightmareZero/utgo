@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"runtime"
 
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -33,15 +34,17 @@ func Recover(msg string, goAfterRecover func(err error)) {
 	if recoveredPanic == nil {
 		return
 	}
+	var buf [4096]byte
+	runtime.Stack(buf[:], false)
 	err := errors.New("panic: " + msg + " , type unknown")
 	switch ff := recoveredPanic.(type) {
 	case string:
-		err = errors.New("panic: " + msg + " , " + ff)
+		err = errors.New("panic: " + msg + " , " + ff + string(buf[:]))
 	case error:
 		err = errors.WithStack(ff)
 	case uint, uint8, uint16, uint32, uint64,
 		int, int8, int16, int32, int64:
-		err = errors.Errorf("panic: error code %v", ff)
+		err = errors.Errorf("panic: error code %v, %v", ff, string(buf[:]))
 	}
 	if nil != goAfterRecover {
 		Try(func() {

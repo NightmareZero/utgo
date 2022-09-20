@@ -5,21 +5,21 @@ import (
 	"strings"
 )
 
-func (s *hsrver) buildRouter() {
-	var md []Middleware = make([]Middleware, len(s.middlewares))
+func (s *hserver) buildRouter() {
+
 	for k, uh := range s.handleMap {
-		mdCache := md[:0]
-		for _, mas := range s.middlewares {
+		var md []Middleware
+		for k2, mas := range s.middlewares {
 			if strings.HasPrefix(k, mas.prefix) {
-				mdCache = append(md, mas.md)
+				md = append(md, s.middlewares[k2].md)
 			}
 		}
 
-		if len(mdCache) > 0 {
+		if len(md) > 0 {
 			router := middlewaredRouter{
-				u: uh,
+				u:   uh,
+				mds: md,
 			}
-			router.mds = append(router.mds, mdCache...)
 			s.serveMux.Handle(k, router)
 		} else {
 			s.serveMux.Handle(k, uh)

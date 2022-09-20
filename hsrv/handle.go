@@ -1,9 +1,13 @@
 package hsrv
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+	"runtime"
+)
 
 type urlHandler struct {
-	s      *hsrver
+	s      *hserver
 	router map[string]RequestHandler
 }
 
@@ -22,10 +26,24 @@ func (u urlHandler) serveHTTP(response Response, request Request) {
 	rh(response, request)
 }
 
-func defaultRecover(s *hsrver, response Response, request Request) {
+func defaultRecover(s *hserver, response Response, request Request) {
 	i := recover()
 	if i != nil {
 		if s.ErrorHandler != nil {
+			var err error
+			var stack [4096]byte
+			runtime.Stack(stack[:], false)
+			switch i.(type) {
+			case error:
+				err = fmt.Errorf("panic: %+v,%+v", i.(error), string(stack[:]))
+			case string:
+				err = fmt.Errorf("panic: %+v,%+v", i.(string), string(stack[:]))
+			case int:
+				err = fmt.Errorf("error code: %v,%+v", i.(int), string(stack[:]))
+			default:
+				err = fmt.Errorf("panic: %+v", string(stack[:]))
+			}
+
 			func(request Request, response Response) {
 				defer func() {
 					i2 := recover()
@@ -35,18 +53,19 @@ func defaultRecover(s *hsrver, response Response, request Request) {
 						}
 					}
 				}()
-				s.ErrorHandler(response, request)
+				s.ErrorHandler(response, request, err)
 			}(request, response)
 		}
 	}
 }
 
 func defaultNotFoundHandler(response Response, request Request) {
-	response.Status(http.StatusNotFound)
-	response.Text("path not found")
+	response.Text("path not found", http.StatusNotFound)
+
 }
 
-func defaultPanicHandler(response Response, request Request) {
-	response.Status(http.StatusInternalServerError)
-	response.Text("internal server error")
+func defaultPanicHandler(response Response, request Request, err error) {
+	defaultLogger.Errorf("%+v", err)
+
+	response.Text("internal server error", http.StatusInternalServerError)
 }

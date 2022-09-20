@@ -10,14 +10,14 @@ import (
 	"time"
 )
 
-type hsrver struct {
+type hserver struct {
 	serveMux *http.ServeMux
 
 	Ctx             context.Context
 	cancel          context.CancelFunc
 	Logger          Logger
 	Config          Config
-	ErrorHandler    RequestHandler
+	ErrorHandler    ErrorHandler
 	NotFoundHandler RequestHandler
 
 	middlewares []_middleware
@@ -29,8 +29,8 @@ type Config struct {
 	Timeout int64
 }
 
-func NewServer(config Config) *hsrver {
-	var serv = &hsrver{
+func NewServer(config Config) *hserver {
+	var serv = &hserver{
 		Config:    config,
 		Logger:    defaultLogger,
 		handleMap: make(map[string]urlHandler),
@@ -38,7 +38,7 @@ func NewServer(config Config) *hsrver {
 	return serv
 }
 
-func (s *hsrver) Middleware(prefix string, middleware Middleware) {
+func (s *hserver) Middleware(prefix string, middleware Middleware) {
 	s.middlewares = append(s.middlewares, _middleware{
 		prefix: prefix,
 		md:     middleware,
@@ -48,10 +48,11 @@ func (s *hsrver) Middleware(prefix string, middleware Middleware) {
 	})
 }
 
-func (s *hsrver) Handle(path string, method string, handler RequestHandler) {
+func (s *hserver) Handle(path string, method string, handler RequestHandler) {
 	h := s.handleMap[path]
 	if h.router == nil {
 		h = urlHandler{
+			s:      s,
 			router: map[string]RequestHandler{},
 		}
 	}
@@ -60,7 +61,7 @@ func (s *hsrver) Handle(path string, method string, handler RequestHandler) {
 
 }
 
-func (s *hsrver) ListenAndServe() error {
+func (s *hserver) ListenAndServe() error {
 	s.serveMux = http.NewServeMux()
 	if s.ErrorHandler == nil {
 		s.ErrorHandler = defaultPanicHandler
@@ -90,6 +91,6 @@ func (s *hsrver) ListenAndServe() error {
 	return nil
 }
 
-func (s *hsrver) Stop() {
+func (s *hserver) Stop() {
 	s.cancel()
 }
