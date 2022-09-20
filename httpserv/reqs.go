@@ -7,13 +7,15 @@ import (
 	"net/http"
 )
 
-type Request http.Request
-
-type Response struct {
-	writer http.ResponseWriter
+type Request struct {
+	*http.Request
 }
 
-type RequestHandler func(Request, Response)
+type Response struct {
+	http.ResponseWriter
+}
+
+type RequestHandler func(Response, Request)
 
 func (r *Request) Text() (string, error) {
 	defer r.Body.Close()
@@ -38,18 +40,24 @@ func (r *Request) Json(target any) error {
 	return nil
 }
 
+func (r *Request) Stream(wr io.Writer) (err error) {
+	defer r.Body.Close()
+	_, err = io.Copy(wr, r.Body)
+	return
+}
+
 func (r *Response) Status(s int) {
-	r.writer.WriteHeader(s)
+	r.WriteHeader(s)
 }
 
 func (r *Response) Headers() http.Header {
-	return r.writer.Header()
+	return r.Header()
 }
 
 func (r *Response) Text(txt string) (err error) {
-	r.writer.WriteHeader(http.StatusOK)
-	r.writer.Header().Add("Content-Type", "text/plain")
-	_, err = r.writer.Write([]byte(txt))
+	r.WriteHeader(http.StatusOK)
+	r.Header().Add("Content-Type", "text/plain")
+	_, err = r.Write([]byte(txt))
 	return
 }
 
@@ -58,8 +66,8 @@ func (r *Response) Json(target any) error {
 	if err != nil {
 		return fmt.Errorf("error on unmarshal json, %w", err)
 	}
-	r.writer.WriteHeader(http.StatusOK)
-	r.writer.Header().Add("Content-Type", "application/json")
-	_, err = r.writer.Write([]byte(b))
+	r.WriteHeader(http.StatusOK)
+	r.Header().Add("Content-Type", "application/json")
+	_, err = r.Write([]byte(b))
 	return err
 }

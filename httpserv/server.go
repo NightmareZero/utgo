@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -19,9 +20,8 @@ type httpServer struct {
 	ErrorHandler    RequestHandler
 	NotFoundHandler RequestHandler
 
-	middlewares map[string][]Middleware
+	middlewares []Middleware
 	handleMap   map[string]urlHandler
-	handle1Map  map[string]urlHandler
 }
 
 type ServerConfig struct {
@@ -33,38 +33,36 @@ func NewHttpServer(config ServerConfig) *httpServer {
 	var serv = &httpServer{
 		Config: config,
 
-		middlewares: map[string][]Middleware{},
-		handleMap:   make(map[string]urlHandler),
-		handle1Map:  make(map[string]urlHandler),
+		handleMap: make(map[string]urlHandler),
 	}
 	return serv
 }
 
-func (s *httpServer) Middleware(path string, middleware Middleware) {
-	_, ok := s.middlewares[path]
-	if !ok {
-		s.middlewares[path] = []Middleware{middleware}
-	}
-	s.middlewares[path] = append(s.middlewares[path], middleware)
+func (s *httpServer) Middleware(middleware Middleware) {
+	s.middlewares = append(s.middlewares, middleware)
+	sort.SliceStable(s.middlewares, func(i, j int) bool {
+		return s.middlewares[i].Prefix < s.middlewares[j].Prefix
+	})
 }
 
 func (s *httpServer) Handle(path string, method string, handler RequestHandler) {
-	var hMap = s.handleMap
-	if !isStaticPath(path) {
-		hMap = s.handle1Map
-	}
-
-	h := hMap[path]
-	if h == nil {
+	h := s.handleMap[path]
+	if h.router == nil {
 		h = urlHandler{}
 	}
-	h[strings.ToUpper(method)] = handler
-	hMap[path] = h
+	h.router[strings.ToUpper(method)] = handler
+	s.handleMap[path] = h
 
 }
 
 func (s *httpServer) ListenAndServe() error {
 	s.serveMux = http.NewServeMux()
+	if s.ErrorHandler == nil {
+		s.ErrorHandler = defaultPanicHandler
+	}
+	if s.NotFoundHandler == nil {
+		s.NotFoundHandler = defaultNotFoundHandler
+	}
 	s.buildRouter()
 
 	ctx := s.Ctx
@@ -87,15 +85,6 @@ func (s *httpServer) ListenAndServe() error {
 	return nil
 }
 
-func (s *httpServer) buildRouter() {
-	// TODO
-}
-
 func (s *httpServer) Stop() {
 	s.cancel()
-}
-
-func isStaticPath(path string) bool {
-	// TODO
-	return true
 }

@@ -2,42 +2,51 @@ package httpserv
 
 import "net/http"
 
-type Middleware struct {
-	Before func(Request, Response) bool
-	After  func(Request, Response)
+type urlHandler struct {
+	s      *httpServer
+	router map[string]RequestHandler
 }
 
-type urlHandler map[string]RequestHandler
+func (u urlHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
+	u.serveHTTP(Response{response}, Request{request})
+}
 
-func (u urlHandler) ServeRequest(server *httpServer, request Request, response Response) {
-	defer func() {
-		i := recover()
-		if i != nil {
-			if server.ErrorHandler != nil {
-				func(request Request, response Response) {
-					defer func() {
-						i2 := recover()
-						if i2 != nil {
-							if server.Logger != nil {
-								server.Logger.Errorf("request error, url: %v,%+v", request.URL, i2)
-							}
-						}
-					}()
-					server.ErrorHandler(request, response)
-				}(request, response)
-			}
-		}
-	}()
+func (u urlHandler) serveHTTP(response Response, request Request) {
+	defer defaultRecover(u.s, response, request)
 
-	rh := u[request.Method]
+	rh := u.router[request.Method]
 	if rh == nil {
-		default405Handler(request, response)
+		defaultNotFoundHandler(response, request)
 		return
 	}
-	rh(request, response)
+	rh(response, request)
 }
 
-func default405Handler(request Request, response Response) {
-	response.Status(http.StatusMethodNotAllowed)
-	response.Text("method not allowed")
+func defaultRecover(s *httpServer, response Response, request Request) {
+	i := recover()
+	if i != nil {
+		if s.ErrorHandler != nil {
+			func(request Request, response Response) {
+				defer func() {
+					i2 := recover()
+					if i2 != nil {
+						if s.Logger != nil {
+							s.Logger.Errorf("request error, url: %v,%+v", request.URL, i2)
+						}
+					}
+				}()
+				s.ErrorHandler(response, request)
+			}(request, response)
+		}
+	}
+}
+
+func defaultNotFoundHandler(response Response, request Request) {
+	response.Status(http.StatusNotFound)
+	response.Text("path not found")
+}
+
+func defaultPanicHandler(response Response, request Request) {
+	response.Status(http.StatusInternalServerError)
+	response.Text("internal server error")
 }
