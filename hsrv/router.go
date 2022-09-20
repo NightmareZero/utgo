@@ -11,7 +11,7 @@ func (s *hsrver) buildRouter() {
 		mdCache := md[:0]
 		for _, mas := range s.middlewares {
 			if strings.HasPrefix(k, mas.prefix) {
-				mdCache = append(md, mas)
+				mdCache = append(md, mas.md)
 			}
 		}
 
@@ -29,11 +29,15 @@ func (s *hsrver) buildRouter() {
 	// TODO
 }
 
-type Middleware struct {
+type _middleware struct {
 	prefix string // 拦截路径
-	Order  int    // 顺序
-	Before func(Response, Request) bool
-	After  func(Response, Request)
+	md     Middleware
+}
+
+type Middleware interface {
+	Order() int // 顺序
+	Before(Response, Request) bool
+	After(Response, Request)
 }
 
 type middlewaredRouter struct {

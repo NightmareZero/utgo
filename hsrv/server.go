@@ -20,7 +20,7 @@ type hsrver struct {
 	ErrorHandler    RequestHandler
 	NotFoundHandler RequestHandler
 
-	middlewares []Middleware
+	middlewares []_middleware
 	handleMap   map[string]urlHandler
 }
 
@@ -39,10 +39,12 @@ func NewServer(config Config) *hsrver {
 }
 
 func (s *hsrver) Middleware(prefix string, middleware Middleware) {
-	middleware.prefix = prefix
-	s.middlewares = append(s.middlewares, middleware)
+	s.middlewares = append(s.middlewares, _middleware{
+		prefix: prefix,
+		md:     middleware,
+	})
 	sort.SliceStable(s.middlewares, func(i, j int) bool {
-		return s.middlewares[i].prefix < s.middlewares[j].prefix
+		return s.middlewares[i].md.Order() < s.middlewares[j].md.Order()
 	})
 }
 
