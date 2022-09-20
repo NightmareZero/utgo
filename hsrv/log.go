@@ -40,45 +40,47 @@ type _defaultLogger struct {
 
 // Debug implements Logger
 func (c *_defaultLogger) Debug(v ...any) {
-	c.print(LvlName[0], v...)
+	c.print(0, v...)
 }
 
 // Debugf implements Logger
 func (c *_defaultLogger) Debugf(format string, v ...any) {
-	c.print(LvlName[0], fmt.Sprintf(format, v...))
+	c.print(0, fmt.Sprintf(format, v...))
 }
 
 // Error implements Logger
 func (c *_defaultLogger) Error(v ...any) {
-	c.print(LvlName[3], v...)
+	c.print(3, v...)
 }
 
 // Errorf implements Logger
 func (c *_defaultLogger) Errorf(format string, v ...any) {
-	c.print(LvlName[3], fmt.Sprintf(format, v...))
+	c.print(3, fmt.Sprintf(format, v...))
 }
 
 // Info implements Logger
 func (c *_defaultLogger) Info(v ...any) {
-	c.print(LvlName[1], v...)
+	c.print(1, v...)
 }
 
 // Infof implements Logger
 func (c *_defaultLogger) Infof(format string, v ...any) {
-	c.print(LvlName[1], fmt.Sprintf(format, v...))
+	c.print(1, fmt.Sprintf(format, v...))
 }
 
 // Warn implements Logger
 func (c *_defaultLogger) Warn(v ...any) {
-	c.print(LvlName[2], v...)
+	c.print(2, v...)
 }
 
 // Warnf implements Logger
 func (c *_defaultLogger) Warnf(format string, v ...any) {
-	c.print(LvlName[2], fmt.Sprintf(format, v...))
+	c.print(2, fmt.Sprintf(format, v...))
 }
 
-func (c *_defaultLogger) print(lvl string, msg ...any) {
-	timeStr := time.Now().Format(defaultLogTimeFormatter)
-	_, _ = fmt.Fprintln(c.Out, fmt.Sprintf("%v [%v] %+v\n", timeStr, lvl, msg))
+func (c *_defaultLogger) print(lvl int, msg ...any) {
+	if c.Level <= lvl {
+		timeStr := time.Now().Format(defaultLogTimeFormatter)
+		_, _ = fmt.Fprintln(c.Out, fmt.Sprintf("%v [%v] %+v\n", timeStr, LvlName[lvl], msg))
+	}
 }
