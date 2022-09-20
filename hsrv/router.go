@@ -1,16 +1,16 @@
-package httpserv
+package hsrv
 
 import (
 	"net/http"
 	"strings"
 )
 
-func (s *httpServer) buildRouter() {
+func (s *hsrver) buildRouter() {
 	var md []Middleware = make([]Middleware, len(s.middlewares))
 	for k, uh := range s.handleMap {
 		mdCache := md[:0]
 		for _, mas := range s.middlewares {
-			if strings.HasPrefix(k, mas.Prefix) {
+			if strings.HasPrefix(k, mas.prefix) {
 				mdCache = append(md, mas)
 			}
 		}
@@ -30,7 +30,7 @@ func (s *httpServer) buildRouter() {
 }
 
 type Middleware struct {
-	Prefix string // 拦截路径
+	prefix string // 拦截路径
 	Order  int    // 顺序
 	Before func(Response, Request) bool
 	After  func(Response, Request)

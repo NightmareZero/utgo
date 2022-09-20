@@ -1,9 +1,9 @@
-package httpserv
+package hsrv
 
 import "net/http"
 
 type urlHandler struct {
-	s      *httpServer
+	s      *hsrver
 	router map[string]RequestHandler
 }
 
@@ -22,7 +22,7 @@ func (u urlHandler) serveHTTP(response Response, request Request) {
 	rh(response, request)
 }
 
-func defaultRecover(s *httpServer, response Response, request Request) {
+func defaultRecover(s *hsrver, response Response, request Request) {
 	i := recover()
 	if i != nil {
 		if s.ErrorHandler != nil {

@@ -1,4 +1,4 @@
-package httpserv
+package hsrv
 
 import (
 	"encoding/json"

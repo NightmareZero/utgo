@@ -1,4 +1,4 @@
-package httpserv
+package hsrv
 
 import (
 	"context"
@@ -10,13 +10,13 @@ import (
 	"time"
 )
 
-type httpServer struct {
+type hsrver struct {
 	serveMux *http.ServeMux
 
 	Ctx             context.Context
 	cancel          context.CancelFunc
 	Logger          Logger
-	Config          ServerConfig
+	Config          Config
 	ErrorHandler    RequestHandler
 	NotFoundHandler RequestHandler
 
@@ -24,38 +24,41 @@ type httpServer struct {
 	handleMap   map[string]urlHandler
 }
 
-type ServerConfig struct {
+type Config struct {
 	Port    int
 	Timeout int64
 }
 
-func NewHttpServer(config ServerConfig) *httpServer {
-	var serv = &httpServer{
-		Config: config,
-
+func NewServer(config Config) *hsrver {
+	var serv = &hsrver{
+		Config:    config,
+		Logger:    defaultLogger,
 		handleMap: make(map[string]urlHandler),
 	}
 	return serv
 }
 
-func (s *httpServer) Middleware(middleware Middleware) {
+func (s *hsrver) Middleware(prefix string, middleware Middleware) {
+	middleware.prefix = prefix
 	s.middlewares = append(s.middlewares, middleware)
 	sort.SliceStable(s.middlewares, func(i, j int) bool {
-		return s.middlewares[i].Prefix < s.middlewares[j].Prefix
+		return s.middlewares[i].prefix < s.middlewares[j].prefix
 	})
 }
 
-func (s *httpServer) Handle(path string, method string, handler RequestHandler) {
+func (s *hsrver) Handle(path string, method string, handler RequestHandler) {
 	h := s.handleMap[path]
 	if h.router == nil {
-		h = urlHandler{}
+		h = urlHandler{
+			router: map[string]RequestHandler{},
+		}
 	}
 	h.router[strings.ToUpper(method)] = handler
 	s.handleMap[path] = h
 
 }
 
-func (s *httpServer) ListenAndServe() error {
+func (s *hsrver) ListenAndServe() error {
 	s.serveMux = http.NewServeMux()
 	if s.ErrorHandler == nil {
 		s.ErrorHandler = defaultPanicHandler
@@ -85,6 +88,6 @@ func (s *httpServer) ListenAndServe() error {
 	return nil
 }
 
-func (s *httpServer) Stop() {
+func (s *hsrver) Stop() {
 	s.cancel()
 }
