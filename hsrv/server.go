@@ -5,9 +5,9 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -106,7 +106,7 @@ func (s *hserver) ListenAndServe() error {
 	if s.Config.Tls != nil {
 		// 初始化x509 certificate
 		certPool := x509.CertPool{}
-		b, err := ioutil.ReadFile(s.Config.Tls.CaPath)
+		b, err := os.ReadFile(s.Config.Tls.CaPath)
 		if err != nil {
 			return fmt.Errorf("failed to read ca files, %w", err)
 		}
