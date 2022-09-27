@@ -15,15 +15,24 @@ var (
 
 type uuid [16]byte
 
-// 生成短id(22个字符)
-func UuidV4_22() string {
-	uuid := uuidV4()
-	return base64.RawURLEncoding.EncodeToString(uuid[:])
+func (u uuid) Str36() string {
+	target := [36]byte{}
+
+	encodeToString(u[:], target[:], true)
+
+	return string(target[:])
 }
 
-func UuidV1_22() string {
-	uuid := uuidV1()
-	return base64.RawURLEncoding.EncodeToString(uuid[:])
+func (u uuid) Str32() string {
+	target := [32]byte{}
+
+	encodeToString(u[:], target[:], false)
+
+	return string(target[:])
+}
+
+func (u uuid) Str22() string {
+	return base64.RawURLEncoding.EncodeToString(u[:])
 }
 
 func NewSnowflaker(generatorId int64) (*snowflaker, error) {
@@ -51,48 +60,8 @@ func NewIotIdSerial(devId, devArea int64) (*iotIdSerial, error) {
 	}, nil
 }
 
-// 生成不带 '-' 的uuid
-func UuidV4_32() string {
-	uuid := uuidV4()
-	target := [32]byte{}
-
-	encodeToString(uuid[:], target[:], false)
-
-	return string(target[:])
-}
-
-// 生成不带 '-' 的uuid
-func UuidV1_32() string {
-	uuid := uuidV1()
-	target := [32]byte{}
-
-	encodeToString(uuid[:], target[:], false)
-
-	return string(target[:])
-}
-
-// 生成UUID (以"-"分隔的 UUID.V1)
-func UuidV1() string {
-	uuid := uuidV1()
-	target := [36]byte{}
-
-	encodeToString(uuid[:], target[:], true)
-
-	return string(target[:])
-}
-
-// 生成UUID (以"-"分隔的 UUID.V4)
-func UuidV4() string {
-	uuid := uuidV4()
-	target := [36]byte{}
-
-	encodeToString(uuid[:], target[:], true)
-
-	return string(target[:])
-}
-
 // 生成uuidV4需要的16位byte随机数
-func uuidV4() (r16 uuid) {
+func UuidV4() (r16 uuid) {
 	io.ReadFull(random1, r16[:])
 
 	r16[6] = (r16[6] & 0x0f) | 0x40 // Version 4
@@ -102,7 +71,7 @@ func uuidV4() (r16 uuid) {
 }
 
 // 生成uuidV1需要的16位byte数
-func uuidV1() (mu uuid) {
+func UuidV1() (mu uuid) {
 	now, seq, err := getTime()
 	if err != nil {
 		return
