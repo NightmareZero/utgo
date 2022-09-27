@@ -27,12 +27,26 @@ func UuidV1_22() string {
 }
 
 func NewSnowflaker(generatorId int64) (*snowflaker, error) {
-	if generatorId < 0 || generatorId > gidLimit {
+	if generatorId < 0 || generatorId > snowGidLimit {
 		return nil, errors.New("生成器序号过大")
 	}
 	return &snowflaker{
 		time:   0,
 		gid:    generatorId,
+		serial: 0,
+	}, nil
+}
+
+func NewIotIdSerial(devId, devArea int64) (*iotIdSerial, error) {
+	if devId < 0 || devId > iotDevLimit {
+		return nil, errors.New("设备序号过大")
+	}
+	if devId < 0 || devArea > iotDevAreaLimit {
+		return nil, errors.New("生成器区域号过大")
+	}
+	return &iotIdSerial{
+		time:   0,
+		dev:    int64(devArea<<int64(iotDevLen) | devId),
 		serial: 0,
 	}, nil
 }
