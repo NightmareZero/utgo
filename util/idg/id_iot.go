@@ -56,10 +56,10 @@ func (i *iotIdSerial) Uuid() uuid {
 func (i *iotIdSerial) Str() string {
 	tId := int64((i.next()-zeroTime)<<int64(iotDevLen) | (i.serial))
 
-	var idg [16]byte = [16]byte{}
+	var idg [12]byte = [12]byte{}
 
-	binary.BigEndian.PutUint64(idg[8:16], uint64(tId))
-	binary.BigEndian.PutUint64(idg[0:8], uint64(i.dev))
+	binary.BigEndian.PutUint64(idg[4:12], uint64(tId))
+	binary.BigEndian.PutUint32(idg[0:4], uint32(i.dev))
 
-	return base64.RawURLEncoding.EncodeToString(idg[4:16])
+	return base64.RawURLEncoding.EncodeToString(idg[:])
 }
