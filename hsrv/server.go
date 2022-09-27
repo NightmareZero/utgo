@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/rs/cors"
 )
 
 type hserver struct {
@@ -115,6 +117,17 @@ func (s *hserver) ListenAndServe() error {
 			ClientAuth: tls.RequireAnyClientCert,
 		}
 
+		// 跨域配置
+		if len(s.Config.Tls.Cors) > 0 {
+			c := cors.New(cors.Options{
+				AllowedOrigins: s.Config.Tls.Cors,
+				AllowedMethods: []string{http.MethodPost, http.MethodGet, http.MethodPut,
+					http.MethodPatch, http.MethodDelete, http.MethodOptions},
+				MaxAge:         600,
+				AllowedHeaders: []string{"*"},
+			})
+			srv.Handler = c.Handler(s.serveMux)
+		}
 		return srv.ListenAndServeTLS(s.Config.Tls.CrtPath, s.Config.Tls.KeyPath)
 	}
 
