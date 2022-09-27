@@ -55,6 +55,7 @@ func (r *Response) File(input io.Reader, size int64, name string) (int64, error)
 
 type Request struct {
 	*http.Request
+	Common any
 }
 
 func (r *Request) Text() (string, error) {

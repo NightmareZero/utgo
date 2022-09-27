@@ -46,8 +46,8 @@ type middlewaredRouter struct {
 }
 
 func (u middlewaredRouter) ServeHTTP(response http.ResponseWriter, request *http.Request) {
-	req, res := Request{request}, Response{response}
-	defer defaultRecover(u.u.s, res, req)
+	req, res := Request{request, u.u.s.Common}, Response{response}
+	defer requestRecover(u.u.s, res, req)
 
 	for _, m := range u.mds {
 		if !m.Before(res, req) {

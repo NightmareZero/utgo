@@ -12,11 +12,11 @@ type urlHandler struct {
 }
 
 func (u urlHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
-	u.serveHTTP(Response{response}, Request{request})
+	u.serveHTTP(Response{response}, Request{request, u.s.Common})
 }
 
 func (u urlHandler) serveHTTP(response Response, request Request) {
-	defer defaultRecover(u.s, response, request)
+	defer requestRecover(u.s, response, request)
 
 	rh := u.router[request.Method]
 	if rh == nil {
@@ -26,7 +26,7 @@ func (u urlHandler) serveHTTP(response Response, request Request) {
 	rh(response, request)
 }
 
-func defaultRecover(s *hserver, response Response, request Request) {
+func requestRecover(s *hserver, response Response, request Request) {
 	i := recover()
 	if i != nil {
 		if s.ErrorHandler != nil {
