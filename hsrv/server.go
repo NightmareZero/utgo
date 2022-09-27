@@ -2,6 +2,10 @@ package hsrv
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"sort"
@@ -27,6 +31,14 @@ type hserver struct {
 type Config struct {
 	Port    int
 	Timeout int64
+	Tls     *TlsConfig
+}
+
+type TlsConfig struct {
+	CrtPath string
+	KeyPath string
+	CaPath  string
+	Cors    []string
 }
 
 func NewServer(config Config) *hserver {
@@ -87,8 +99,26 @@ func (s *hserver) ListenAndServe() error {
 			return ctx2
 		},
 	}
-	srv.ListenAndServe()
-	return nil
+
+	// 如果添加了证书路径
+	if s.Config.Tls != nil {
+		// 初始化x509 certificate
+		certPool := x509.CertPool{}
+		b, err := ioutil.ReadFile(s.Config.Tls.CaPath)
+		if err != nil {
+			return fmt.Errorf("failed to read ca files, %w", err)
+		}
+		certPool.AppendCertsFromPEM(b)
+
+		srv.TLSConfig = &tls.Config{
+			ClientCAs:  &certPool,
+			ClientAuth: tls.RequireAnyClientCert,
+		}
+
+		return srv.ListenAndServeTLS(s.Config.Tls.CrtPath, s.Config.Tls.KeyPath)
+	}
+
+	return srv.ListenAndServe()
 }
 
 func (s *hserver) Stop() {
