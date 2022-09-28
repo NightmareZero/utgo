@@ -99,7 +99,11 @@ func (r *Request) UrlParam() (map[string]string, error) {
 	}
 	values := map[string]string{}
 	for key, value := range params {
-		values[key] = value[0]
+		if len(value) > 0 {
+			values[key] = value[0]
+		} else {
+			values[key] = ""
+		}
 	}
 	return values, nil
 }
