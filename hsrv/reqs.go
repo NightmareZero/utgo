@@ -1,11 +1,13 @@
 package hsrv
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 )
@@ -84,6 +86,22 @@ func (r *Request) Json(target any) error {
 		return fmt.Errorf("error on unmarshal json, %w", err)
 	}
 	return nil
+}
+
+func (r *Request) UrlParam() (map[string]string, error) {
+	buffer := bytes.NewBuffer(make([]byte, 0, r.ContentLength))
+	buffer.ReadFrom(r.Body)
+	fmt.Println(buffer.String())
+
+	params, err := url.ParseQuery(buffer.String())
+	if err != nil {
+		return nil, fmt.Errorf("error on parse url param, %w", err)
+	}
+	values := map[string]string{}
+	for key, value := range params {
+		values[key] = value[0]
+	}
+	return values, nil
 }
 
 func (r *Request) Stream(wr io.Writer) (err error) {
