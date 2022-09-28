@@ -16,7 +16,7 @@ import (
 	"github.com/rs/cors"
 )
 
-type hserver struct {
+type Server struct {
 	serveMux *http.ServeMux
 
 	Ctx             context.Context    // 全局上下文
@@ -45,8 +45,8 @@ type TlsConfig struct {
 	Cors    []string
 }
 
-func NewServer(config Config) *hserver {
-	var serv = &hserver{
+func NewServer(config Config) *Server {
+	var serv = &Server{
 		Config:    config,
 		Logger:    defaultLogger,
 		handleMap: make(map[string]urlHandler),
@@ -54,7 +54,7 @@ func NewServer(config Config) *hserver {
 	return serv
 }
 
-func (s *hserver) Middleware(prefix string, middleware Middleware) {
+func (s *Server) Middleware(prefix string, middleware Middleware) {
 	s.middlewares = append(s.middlewares, _middleware{
 		prefix: prefix,
 		md:     middleware,
@@ -64,7 +64,7 @@ func (s *hserver) Middleware(prefix string, middleware Middleware) {
 	})
 }
 
-func (s *hserver) Handle(path string, method string, handler RequestHandler) {
+func (s *Server) Handle(path string, method string, handler RequestHandler) {
 	h := s.handleMap[path]
 	if h.router == nil {
 		h = urlHandler{
@@ -77,7 +77,7 @@ func (s *hserver) Handle(path string, method string, handler RequestHandler) {
 
 }
 
-func (s *hserver) ListenAndServe() error {
+func (s *Server) ListenAndServe() error {
 	s.serveMux = http.NewServeMux()
 	if s.ErrorHandler == nil {
 		s.ErrorHandler = defaultPanicHandler
@@ -136,6 +136,6 @@ func (s *hserver) ListenAndServe() error {
 	return srv.ListenAndServe()
 }
 
-func (s *hserver) Stop() {
+func (s *Server) Stop() {
 	s.cancel()
 }

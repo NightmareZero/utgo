@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func (s *hserver) buildRouter() {
+func (s *Server) buildRouter() {
 
 	for k, uh := range s.handleMap {
 		var md []Middleware

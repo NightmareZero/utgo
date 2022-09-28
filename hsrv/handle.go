@@ -7,7 +7,7 @@ import (
 )
 
 type urlHandler struct {
-	s      *hserver
+	s      *Server
 	router map[string]RequestHandler
 }
 
@@ -26,7 +26,7 @@ func (u urlHandler) serveHTTP(response Response, request Request) {
 	rh(response, request)
 }
 
-func requestRecover(s *hserver, response Response, request Request) {
+func requestRecover(s *Server, response Response, request Request) {
 	i := recover()
 	if i != nil {
 		if s.ErrorHandler != nil {
