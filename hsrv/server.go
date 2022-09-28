@@ -29,7 +29,7 @@ type hserver struct {
 	middlewares []_middleware         // 内部 中间件列表
 	handleMap   map[string]urlHandler // 内部 路由表
 
-	Common any // 公共数据
+	WebContext any // 全局web上下文(所有连接共享), 会被放到Request中
 }
 
 type Config struct {

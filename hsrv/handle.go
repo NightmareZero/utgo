@@ -12,7 +12,7 @@ type urlHandler struct {
 }
 
 func (u urlHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
-	u.serveHTTP(Response{response}, Request{request, u.s.Common})
+	u.serveHTTP(Response{response}, Request{request, u.s.WebContext})
 }
 
 func (u urlHandler) serveHTTP(response Response, request Request) {
