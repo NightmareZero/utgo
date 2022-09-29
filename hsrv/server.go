@@ -87,10 +87,10 @@ func (s *Server) ListenAndServe() error {
 	}
 	s.buildRouter()
 
-	ctx := s.Ctx
-	if ctx == nil {
-		ctx = context.Background()
+	if s.Ctx == nil {
+		s.Ctx = context.Background()
 	}
+	ctx := s.Ctx
 
 	srv := &http.Server{
 		Addr:         ":" + strconv.Itoa(s.Config.Port),

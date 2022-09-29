@@ -30,33 +30,37 @@ func requestRecover(s *Server, response Response, request Request) {
 	i := recover()
 	if i != nil {
 		if s.ErrorHandler != nil {
-			var err error
-			var stack [4096]byte
-			runtime.Stack(stack[:], false)
-			switch i.(type) {
-			case error:
-				err = fmt.Errorf("panic: %+v,%+v", i.(error), string(stack[:]))
-			case string:
-				err = fmt.Errorf("panic: %+v,%+v", i.(string), string(stack[:]))
-			case int:
-				err = fmt.Errorf("error code: %v,%+v", i.(int), string(stack[:]))
-			default:
-				err = fmt.Errorf("panic: %+v", string(stack[:]))
-			}
-
-			func(request Request, response Response) {
-				defer func() {
-					i2 := recover()
-					if i2 != nil {
-						if s.Logger != nil {
-							s.Logger.Errorf("request error, url: %v,%+v", request.URL, i2)
-						}
-					}
-				}()
-				s.ErrorHandler(response, request, err)
-			}(request, response)
+			doRecover(i, s, request, response)
 		}
 	}
+}
+
+func doRecover(i any, s *Server, request Request, response Response) {
+	var err error
+	var stack [4096]byte
+	runtime.Stack(stack[:], false)
+	switch ii := i.(type) {
+	case error:
+		err = fmt.Errorf("panic: %+v,%+v", ii, string(stack[:]))
+	case string:
+		err = fmt.Errorf("panic: %+v,%+v", ii, string(stack[:]))
+	case int:
+		err = fmt.Errorf("error code: %v,%+v", ii, string(stack[:]))
+	default:
+		err = fmt.Errorf("panic: %+v", string(stack[:]))
+	}
+
+	func(request Request, response Response) {
+		defer func() {
+			i2 := recover()
+			if i2 != nil {
+				if s.Logger != nil {
+					s.Logger.Errorf("request error, url: %v,%+v", request.URL, i2)
+				}
+			}
+		}()
+		s.ErrorHandler(response, request, err)
+	}(request, response)
 }
 
 func defaultNotFoundHandler(response Response, request Request) {
