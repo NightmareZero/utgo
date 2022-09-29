@@ -5,13 +5,7 @@ import (
 	"runtime"
 
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
 )
-
-type errCodeType interface {
-	uint | uint8 | uint16 | uint32 | uint64 |
-		int | int8 | int16 | int32 | int64
-}
 
 // Try 保护方法运行
 func Try(invoke func()) {
@@ -34,10 +28,14 @@ func Recover(msg string, goAfterRecover func(err error)) {
 	if recoveredPanic == nil {
 		return
 	}
+	doRecover(msg, recoveredPanic, goAfterRecover)
+}
+
+func doRecover(msg string, pan any, goAfterRecover func(err error)) {
 	var buf [4096]byte
 	runtime.Stack(buf[:], false)
 	err := errors.New("panic: " + msg + " , type unknown")
-	switch ff := recoveredPanic.(type) {
+	switch ff := pan.(type) {
 	case string:
 		err = errors.New("panic: " + msg + " , " + ff + string(buf[:]))
 	case error:
@@ -51,6 +49,6 @@ func Recover(msg string, goAfterRecover func(err error)) {
 			goAfterRecover(err)
 		})
 	} else {
-		fmt.Printf("%+v\n", zap.Error(err))
+		fmt.Printf("%+v\n", err)
 	}
 }
