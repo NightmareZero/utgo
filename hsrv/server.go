@@ -16,6 +16,10 @@ import (
 	"github.com/rs/cors"
 )
 
+type CtxTag string
+
+const WebContextVName CtxTag = "WebContext"
+
 type Server struct {
 	serveMux *http.ServeMux
 
@@ -87,7 +91,7 @@ func (s *Server) ListenAndServe() error {
 	if s.Ctx == nil {
 		s.Ctx = context.Background()
 	}
-	ctx := s.Ctx
+	ctx := context.WithValue(s.Ctx, WebContextVName, s.WebContext)
 
 	srv := &http.Server{
 		Addr:         ":" + strconv.Itoa(s.Config.Port),
