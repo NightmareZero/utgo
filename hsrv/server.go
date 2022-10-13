@@ -47,10 +47,13 @@ type TlsConfig struct {
 
 func NewServer(config Config) *Server {
 	var serv = &Server{
-		Config:    config,
-		Logger:    defaultLogger,
-		handleMap: make(map[string]urlHandler),
+		Config:          config,
+		Logger:          defaultLogger,
+		handleMap:       make(map[string]urlHandler),
+		ErrorHandler:    defaultPanicHandler,
+		NotFoundHandler: defaultNotFoundHandler,
 	}
+	serv.Logger.Info("hSrv: server inited")
 	return serv
 }
 
@@ -79,12 +82,6 @@ func (s *Server) Handle(path string, method string, handler RequestHandler) {
 
 func (s *Server) ListenAndServe() error {
 	s.serveMux = http.NewServeMux()
-	if s.ErrorHandler == nil {
-		s.ErrorHandler = defaultPanicHandler
-	}
-	if s.NotFoundHandler == nil {
-		s.NotFoundHandler = defaultNotFoundHandler
-	}
 	s.buildRouter()
 
 	if s.Ctx == nil {
@@ -106,11 +103,13 @@ func (s *Server) ListenAndServe() error {
 
 	// 如果添加了证书路径
 	if s.Config.Tls != nil {
+		s.Logger.Info("hSrv: tls enabled")
 		// 初始化x509 certificate
 		certPool := x509.CertPool{}
+		s.Logger.Info("hSrv: load ca : %v", s.Config.Tls.CaPath)
 		b, err := os.ReadFile(s.Config.Tls.CaPath)
 		if err != nil {
-			return fmt.Errorf("failed to read ca files, %w", err)
+			return fmt.Errorf("hSrv: failed to read ca files, %w", err)
 		}
 		certPool.AppendCertsFromPEM(b)
 
@@ -130,9 +129,11 @@ func (s *Server) ListenAndServe() error {
 			})
 			srv.Handler = c.Handler(s.serveMux)
 		}
+		s.Logger.Infof("hSrv: serve https, port %v", s.Config.Port)
 		return srv.ListenAndServeTLS(s.Config.Tls.CrtPath, s.Config.Tls.KeyPath)
 	}
 
+	s.Logger.Infof("hSrv: serve http, port %v", s.Config.Port)
 	return srv.ListenAndServe()
 }
 
