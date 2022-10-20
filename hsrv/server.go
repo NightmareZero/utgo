@@ -61,6 +61,8 @@ func NewServer(config Config) *Server {
 	return serv
 }
 
+// function around handler
+// prefix: url prefix for middleware
 func (s *Server) Middleware(prefix string, middleware Middleware) {
 	s.middlewares = append(s.middlewares, _middleware{
 		prefix: prefix,
@@ -71,6 +73,15 @@ func (s *Server) Middleware(prefix string, middleware Middleware) {
 	})
 }
 
+// listen method on path
+// path: listen path (if end with '/' ,will listen all start with $path)
+// method: listen method such as 'GET', 'POST', 'PUT', 'DELETE'
+// handler: function handler
+// =======
+// 监听方法
+// path: 路径 (如果以 '/' 为结尾，则会监听所有以$path开头的路径)
+// method: 监听的服务器方法
+// handler: 执行方法的句柄
 func (s *Server) Handle(path string, method string, handler RequestHandler) {
 	h := s.handleMap[path]
 	if h.router == nil {
