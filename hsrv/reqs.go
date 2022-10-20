@@ -23,28 +23,28 @@ type Response struct {
 }
 
 func (r *Response) Text(txt string, statusCode int) (err error) {
-	r.WriteHeader(statusCode)
 	r.Header().Add("Content-Type", "text/plain; charset=utf-8")
+	r.WriteHeader(statusCode)
 	_, err = r.Write([]byte(txt))
 	return
 }
 
 func (r *Response) Json(target any, statusCode int) error {
-	r.WriteHeader(statusCode)
 	b, err := json.Marshal(target)
 	if err != nil {
 		return fmt.Errorf("error on unmarshal json, %w", err)
 	}
 	r.Header().Add("Content-Type", "application/json; charset=utf-8")
+	r.WriteHeader(statusCode)
 	_, err = r.Write([]byte(b))
 	return err
 }
 
 func (r *Response) File(input io.Reader, size int64, name string) (int64, error) {
-	r.WriteHeader(http.StatusOK)
 	r.Header().Set("Content-Disposition", "attachment; filename="+name)
 	r.Header().Set("Content-Type", "application/octet-stream")
 	r.Header().Set("Content-Length", strconv.FormatInt(size, 10))
+	r.WriteHeader(http.StatusOK)
 	w, err := io.Copy(r, input)
 	if err != nil {
 		return w, fmt.Errorf("fail on response file, %w", err)

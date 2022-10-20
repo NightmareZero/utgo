@@ -3,7 +3,9 @@ package hsrv
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"runtime"
+	"strings"
 )
 
 type urlHandler struct {
@@ -63,13 +65,32 @@ func doRecover(i any, s *Server, request Request, response Response) {
 	}(request, response)
 }
 
-func defaultNotFoundHandler(response Response, request Request) {
-	response.Text("path not found", http.StatusNotFound)
+func defaultNotFoundHandler(w Response, r Request) {
+	w.Text("path not found", http.StatusNotFound)
 
 }
 
-func defaultPanicHandler(response Response, request Request, err error) {
+func defaultPanicHandler(w Response, r Request, err error) {
 	defaultLogger.Errorf("%+v", err)
 
-	response.Text("internal server error", http.StatusInternalServerError)
+	w.Text("internal server error", http.StatusInternalServerError)
+}
+
+func newStaticFileHandler(s *Server, basepath, staticpath string) RequestHandler {
+	return func(w Response, r Request) {
+		p := r.URL.Path
+		truepath := staticpath + strings.Replace(p, basepath, "", 1)
+
+		f, err := os.OpenFile(truepath, os.O_RDWR, 0)
+		if err != nil {
+			s.Logger.Errorf("hSrv: file not found url: %v static: %v", p, truepath)
+			w.Text("path not found", http.StatusNotFound)
+			return
+		}
+		defer f.Close()
+
+		fi, _ := f.Stat()
+
+		w.File(f, fi.Size(), f.Name())
+	}
 }

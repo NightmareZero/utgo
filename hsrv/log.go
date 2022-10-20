@@ -81,6 +81,6 @@ func (c *_defaultLogger) Warnf(format string, v ...any) {
 func (c *_defaultLogger) print(lvl int, msg ...any) {
 	if c.Level <= lvl {
 		timeStr := time.Now().Format(defaultLogTimeFormatter)
-		_, _ = fmt.Fprintln(c.Out, fmt.Sprintf("%v [%v] %+v\n", timeStr, LvlName[lvl], msg))
+		_, _ = fmt.Fprintf(c.Out, "%v [%v] %v\n", timeStr, LvlName[lvl], msg)
 	}
 }

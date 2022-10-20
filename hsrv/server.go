@@ -53,7 +53,7 @@ func NewServer(config Config) *Server {
 	var serv = &Server{
 		Config:          config,
 		Logger:          defaultLogger,
-		handleMap:       make(map[string]urlHandler),
+		handleMap:       map[string]urlHandler{},
 		ErrorHandler:    defaultPanicHandler,
 		NotFoundHandler: defaultNotFoundHandler,
 	}
@@ -81,7 +81,13 @@ func (s *Server) Handle(path string, method string, handler RequestHandler) {
 	}
 	h.router[strings.ToUpper(method)] = handler
 	s.handleMap[path] = h
+}
 
+func (s *Server) Static(path, static string) {
+	if !strings.HasSuffix(path, "/") {
+		path = path + "/"
+	}
+	s.Handle(path, "GET", newStaticFileHandler(s, path, static))
 }
 
 func (s *Server) ListenAndServe() error {
