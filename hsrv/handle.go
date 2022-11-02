@@ -39,7 +39,7 @@ func requestRecover(s *Server, response Response, request Request) {
 
 func doRecover(i any, s *Server, request Request, response Response) {
 	var err error
-	var stack [4096]byte
+	var stack = [4096]byte{}
 	runtime.Stack(stack[:], false)
 	switch ii := i.(type) {
 	case error:
