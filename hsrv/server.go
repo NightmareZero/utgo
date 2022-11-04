@@ -57,7 +57,6 @@ func NewServer(config Config) *Server {
 		ErrorHandler:    defaultPanicHandler,
 		NotFoundHandler: defaultNotFoundHandler,
 	}
-	serv.Logger.Info("hSrv: server inited")
 	return serv
 }
 
@@ -102,6 +101,8 @@ func (s *Server) Static(path, static string) {
 }
 
 func (s *Server) ListenAndServe() error {
+	s.Logger.Info("hSrv: server starting...")
+
 	s.serveMux = http.NewServeMux()
 	s.buildRouter()
 
