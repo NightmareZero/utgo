@@ -6,7 +6,20 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+// 标签名称
 const TAG_NAME = "xlsr"
+
+// 标签项目
+const (
+	pRowName = "row" // 行标签
+	pColName = "col" // 列标签
+	pParesr  = "pp"  // 转换器标签
+)
+
+const (
+	// 默认日期转换器
+	defaultTimeFormat = "2006-01-02 15:04:05"
+)
 
 // 打开一个excel文件
 // path: 存储路径

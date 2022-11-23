@@ -1,6 +1,7 @@
 package xlsread
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 )
@@ -15,29 +16,39 @@ var _ Cursor = &RowReadCursor{}
 
 // 读取光标
 type RowReadCursor struct {
-	Row   int        // 行数
-	Col   int        // 列数
-	Sheet string     // 工作表
-	data  [][]string //数据
+	row int // 行数
+	// col   int        // 列数
+	// sheet string     // 工作表
+	data    [][]string //数据
+	parsers map[string]IParser
 }
 
-// Parse implements Cursor
+// 处理本行
+// dst: 目标结构体
 func (c *RowReadCursor) Parse(dst any) error {
 	// 检查是否是指向结构体的指针
 	if !_isPtrTo(reflect.Struct, dst) {
 		return fmt.Errorf("excelr: requires a pointer to struct as 'dst' ")
 	}
 
-	row := c.data[c.Row-1]
+	// 取出本行
+	row := c.data[c.row-1]
 
 	dstTye := reflect.TypeOf(dst)
 	for i := 0; i < dstTye.NumField(); i++ {
 		field := dstTye.Field(i)
-		tagInfo := getTagInfo(field.Tag.Get(TAG_NAME))
+		tagInfo := getTagInfo(c.parsers, field.Tag.Get(TAG_NAME))
 		if tagInfo.col < len(row) {
 			s := row[tagInfo.col-1]
 			pf := reflect.ValueOf(field).Addr()
-			parseVal(s, pf)
+
+			err := parseVal(s, pf, tagInfo.parser)
+			if err != nil {
+				if errors.Is(err, ErrUnknownType) {
+					err = fmt.Errorf("%w, %v", err, field.Name)
+				}
+				return err
+			}
 		}
 
 	}
@@ -48,8 +59,8 @@ func (c *RowReadCursor) Parse(dst any) error {
 
 // funcNext implements Cursor
 func (c *RowReadCursor) Next() (hasNext bool) {
-	c.Row++
-	return len(c.data) <= (c.Row - 1)
+	c.row++
+	return len(c.data) <= (c.row - 1)
 }
 
 // 将工作表中的数据根据struct中的tag插入结构体中 (目标为结构体切片)
@@ -70,7 +81,7 @@ func (c *RowReadCursor) All(dst any) error {
 		// 单行解析
 		err := c.Parse(pDstRow)
 		if err != nil {
-			return fmt.Errorf("Document.UnmarshalRows: unmarshal error on row %v, %w", c.Row, err)
+			return fmt.Errorf("Document.UnmarshalRows: unmarshal error on row %v, %w", c.row, err)
 		}
 
 		// 插入目标数组

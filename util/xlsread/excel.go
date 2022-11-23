@@ -13,11 +13,9 @@ type Document struct {
 }
 
 func (d *Document) ReadSheetByRow(opt ...RowReadOption) (Cursor, error) {
-	var opt1 RowReadOption
+	var opt1 RowReadOption = defaultRowReadOpt
 	if len(opt) > 0 {
 		opt1 = opt[1]
-	} else {
-		opt1 = defaultRowReadOpt
 	}
 
 	// 读取工作表数据

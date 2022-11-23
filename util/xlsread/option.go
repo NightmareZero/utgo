@@ -2,6 +2,7 @@ package xlsread
 
 type Option struct {
 	SheetName string
+	Parsers   map[string]IParser
 }
 
 type RowReadOption struct {
