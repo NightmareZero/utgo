@@ -47,19 +47,19 @@ func getTagInfo(parsers map[string]IParser, tag string) (res TagInfo) {
 	return
 }
 
-func parseVal(src string, dst any, parser IParser) error {
-	k := reflect.TypeOf(dst).Kind()
-	if reflect.Ptr != k {
-		return errors.New("xlsr.parseVal: dst must be a pointer")
-	}
+func parseVal(src string, dst reflect.Value, parser IParser) error {
+	// k := reflect.TypeOf(dst).Kind()
+	// if reflect.Ptr != k {
+	// 	return errors.New("xlsr.parseVal: dst must be a pointer")
+	// }
 
-	k = reflect.TypeOf(dst).Elem().Kind()
-	v := reflect.ValueOf(dst).Elem()
+	k := dst.Kind()
+	// v := reflect.ValueOf(dst).Elem()
 
 	// 预处理有 Parser 的
 	if parser != nil {
 		parsed := parser(src)
-		v.Set(reflect.ValueOf(parsed))
+		dst.Set(reflect.ValueOf(parsed))
 		return nil
 	}
 
@@ -71,7 +71,7 @@ func parseVal(src string, dst any, parser IParser) error {
 		if err != nil {
 			return fmt.Errorf("xlsr.parseVal: parse error, %w", err)
 		}
-		v.SetInt(i)
+		dst.SetInt(i)
 
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		// 处理无符号数值类型
@@ -79,22 +79,22 @@ func parseVal(src string, dst any, parser IParser) error {
 		if err != nil {
 			return fmt.Errorf("xlsr.parseVal: parse error, %w", err)
 		}
-		v.SetUint(i)
+		dst.SetUint(i)
 
 	case reflect.String: // 处理字符串类型
-		v.Set(reflect.ValueOf(src))
+		dst.Set(reflect.ValueOf(src))
 
 	case reflect.Float32, reflect.Float64: // 处理浮点数类型
 		f, err := strconv.ParseFloat(src, 64)
 		if err != nil {
 			return fmt.Errorf("xlsr.parseVal: parse error, %w", err)
 		}
-		v.SetFloat(f)
+		dst.SetFloat(f)
 
 	case reflect.Bool: // 处理布尔类型
 		lowerSrc := strings.ToLower(src)
 		if lowerSrc == "true" || lowerSrc == "1" || lowerSrc == "yes" {
-			v.SetBool(true)
+			dst.SetBool(true)
 		}
 	default:
 		return ErrUnknownType

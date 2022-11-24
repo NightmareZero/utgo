@@ -1,6 +1,7 @@
 package xlsread
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 
@@ -15,7 +16,7 @@ type Document struct {
 func (d *Document) ReadSheetByRow(opt ...RowReadOption) (Cursor, error) {
 	var opt1 RowReadOption = defaultRowReadOpt
 	if len(opt) > 0 {
-		opt1 = opt[1]
+		opt1 = opt[0]
 	}
 
 	// 读取工作表数据
@@ -34,8 +35,8 @@ func (d *Document) ReadSheetByRow(opt ...RowReadOption) (Cursor, error) {
 func (d *Document) ReadSheetByTable(dst any, opt ...*Option) error {
 	// TODO 暂时不实现
 	// 检查是否是指向结构体的指针
-	if !_isPtrTo(reflect.Struct, dst) {
-		return fmt.Errorf("excelr: requires a pointer to struct as 'dst' ")
+	if err := _isPtrTo(reflect.Slice, dst); err != nil {
+		return fmt.Errorf("excelr: requires a pointer to slice as 'dst', %w ", err)
 	}
 
 	// t := reflect.TypeOf(dst)
@@ -46,19 +47,24 @@ func (d *Document) GetSheetData(opt *Option) ([][]string, error) {
 	return d.h.GetRows(opt.SheetName)
 }
 
+var (
+	ErrNotPtr     = errors.New("dst needs to be a pointer")
+	ErrInvlidKind = errors.New("invalid kind of dst")
+)
+
 // 是指向目标类型的指针
 // isTyp: 预期的目标类型
 // dst: 目标
-func _isPtrTo(isTyp reflect.Kind, dst any) bool {
+func _isPtrTo(isTyp reflect.Kind, dst any) error {
 	var dstTyp = reflect.TypeOf(dst)
 	// 判断是否是指针类型
 	if dstTyp.Kind() != reflect.Ptr {
-		return false
+		return ErrNotPtr
 	}
 
 	// 判断是否是目标类型
-	if dstTyp.Elem().Kind() == isTyp {
-		return true
+	if dstTyp.Elem().Kind() != isTyp {
+		return fmt.Errorf("%w: %v != %v", ErrInvlidKind, dstTyp.Elem().Kind(), isTyp.String())
 	}
-	return false
+	return nil
 }

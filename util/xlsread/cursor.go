@@ -1,7 +1,6 @@
 package xlsread
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 )
@@ -27,26 +26,34 @@ type RowReadCursor struct {
 // dst: 目标结构体
 func (c *RowReadCursor) Parse(dst any) error {
 	// 检查是否是指向结构体的指针
-	if !_isPtrTo(reflect.Struct, dst) {
-		return fmt.Errorf("excelr: requires a pointer to struct as 'dst' ")
+	if err := _isPtrTo(reflect.Struct, dst); err != nil {
+		return fmt.Errorf("excelr: requires a pointer to struct as 'dst', %w ", err)
 	}
 
 	// 取出本行
 	row := c.data[c.row-1]
 
-	dstTye := reflect.TypeOf(dst)
-	for i := 0; i < dstTye.NumField(); i++ {
-		field := dstTye.Field(i)
-		tagInfo := getTagInfo(c.parsers, field.Tag.Get(TAG_NAME))
-		if tagInfo.col < len(row) {
-			s := row[tagInfo.col-1]
-			pf := reflect.ValueOf(field).Addr()
+	dstVal := reflect.ValueOf(dst).Elem()
+	dstTyp := dstVal.Type()
 
-			err := parseVal(s, pf, tagInfo.parser)
+	for i := 0; i < dstVal.NumField(); i++ {
+		field := dstTyp.Field(i)
+		fieldVal := dstVal.Field(i)
+
+		// 跳过不可访问的字段 (如私有)
+		if !fieldVal.IsValid() || !fieldVal.CanSet() {
+			continue
+		}
+
+		// 获取标签信息
+		tagInfo := getTagInfo(c.parsers, field.Tag.Get(TAG_NAME))
+		if 0 < tagInfo.col && tagInfo.col < len(row) {
+			s := row[tagInfo.col-1]
+
+			var err error
+			err = parseVal(s, fieldVal, tagInfo.parser)
 			if err != nil {
-				if errors.Is(err, ErrUnknownType) {
-					err = fmt.Errorf("%w, %v", err, field.Name)
-				}
+				err = fmt.Errorf("error parse column %v '%v' to '%v' %w,", tagInfo.col, s, field.Name, err)
 				return err
 			}
 		}
@@ -60,32 +67,37 @@ func (c *RowReadCursor) Parse(dst any) error {
 // funcNext implements Cursor
 func (c *RowReadCursor) Next() (hasNext bool) {
 	c.row++
-	return len(c.data) <= (c.row - 1)
+	return (c.row - 1) < len(c.data)
 }
 
 // 将工作表中的数据根据struct中的tag插入结构体中 (目标为结构体切片)
 func (c *RowReadCursor) All(dst any) error {
+
 	// 检查是否是指向结构体的指针
-	if !(_isPtrTo(reflect.Slice, dst) || _isPtrTo(reflect.Array, dst)) {
-		return fmt.Errorf("excelr: requires a pointer to slice as 'dst' ")
+	if err := _isPtrTo(reflect.Slice, dst); err != nil {
+		return fmt.Errorf("excelr: requires a pointer to slice as 'dst', %w ", err)
 	}
 
-	dstSliceVal := reflect.ValueOf(dst)
+	dstVal := reflect.ValueOf(dst).Elem() // dst指向的类型 Kind = Slice
+
+	sItemTyp := dstVal.Type().Elem()
+	if sItemTyp.Kind() == reflect.Ptr {
+		sItemTyp = sItemTyp.Elem()
+	}
 
 	// 遍历工作表行
 	for c.Next() {
 		// 创建新的结构体
-		itemVal := reflect.ValueOf(dstSliceVal).Elem()
-		var pDstRow any = reflect.New(itemVal.Type())
+		var pVal = reflect.New(sItemTyp).Interface()
 
 		// 单行解析
-		err := c.Parse(pDstRow)
+		err := c.Parse(pVal)
 		if err != nil {
 			return fmt.Errorf("Document.UnmarshalRows: unmarshal error on row %v, %w", c.row, err)
 		}
 
 		// 插入目标数组
-		reflect.Append(dstSliceVal, reflect.ValueOf(pDstRow))
+		dstVal.Set(reflect.Append(dstVal, reflect.ValueOf(pVal).Elem()))
 	}
 	return nil
 }
