@@ -47,7 +47,7 @@ func (c *RowReadCursor) Parse(dst any) error {
 
 		// 获取标签信息
 		tagInfo := getTagInfo(c.parsers, field.Tag.Get(TAG_NAME))
-		if 0 < tagInfo.col && tagInfo.col < len(row) {
+		if 0 < tagInfo.col && tagInfo.col <= len(row) {
 			s := row[tagInfo.col-1]
 
 			var err error

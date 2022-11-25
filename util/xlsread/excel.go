@@ -28,6 +28,7 @@ func (d *Document) ReadSheetByRow(opt ...RowReadOption) (Cursor, error) {
 	// 拼装返回类型
 	c := &RowReadCursor{}
 	c.data = sheetData
+	c.parsers = opt1.Parsers
 	return c, nil
 }
 

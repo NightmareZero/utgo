@@ -19,6 +19,7 @@ const (
 const (
 	// 默认日期转换器
 	defaultTimeFormat = "2006-01-02 15:04:05"
+	defaultDateFormat = "2006-01-02"
 )
 
 // 打开一个excel文件

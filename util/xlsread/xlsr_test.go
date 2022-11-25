@@ -2,19 +2,18 @@ package xlsread
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 	"time"
 )
 
 type ProductItem struct {
-	Name     string    `json:"name" xlsr:"col:1"`     // 品名
-	LotNo    string    `json:"lotNo" xlsr:"col:2"`    // 批号
-	TypeCode string    `json:"typeCode" xlsr:"col:3"` // 类型代码
-	Quantity int16     `json:"quantity" xlsr:"col:4"` // 商品数量
-	Price    float64   `json:"price" xlsr:"col:5"`    // 单价
-	OutTime  time.Time `json:"outTime" xlsr:"col:6"`  // 过期时间
-	InTime   time.Time `json:"inTime" xlsr:"col:7"`   // 进货时间
+	Name     string    `json:"name" xlsr:"col:1"`         // 品名
+	LotNo    string    `json:"lotNo" xlsr:"col:2"`        // 批号
+	TypeCode string    `json:"typeCode" xlsr:"col:3"`     // 类型代码
+	Quantity int16     `json:"quantity" xlsr:"col:4"`     // 商品数量
+	Price    float64   `json:"price" xlsr:"col:5"`        // 单价
+	OutTime  time.Time `json:"outTime" xlsr:"col:6"`      // 过期时间
+	InTime   time.Time `json:"inTime" xlsr:"col:7 pp:t1"` // 进货时间
 
 }
 
@@ -42,6 +41,9 @@ func Test_ReadSheet1(t *testing.T) {
 
 			rro := RowReadOption{}
 			rro.SheetName = "Sheet1"
+			rro.Parsers = map[string]IParser{
+				"t1": DefaultStrDataParser,
+			}
 
 			cur, err := d.ReadSheetByRow(rro)
 			if err != nil {
@@ -59,15 +61,4 @@ func Test_ReadSheet1(t *testing.T) {
 			t.Logf("haha: %+v", tt.dst)
 		})
 	}
-}
-
-func Test_A1(t *testing.T) {
-	a := ProductItem{}
-	av := reflect.ValueOf(a)
-	for i := 0; i < av.NumField(); i++ {
-		sf := av.Type().Field(i)
-		f := av.Field(i)
-		t.Logf("%v %v", sf.Name, f.Kind())
-	}
-
 }
