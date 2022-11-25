@@ -41,9 +41,9 @@ func Test_ReadSheet1(t *testing.T) {
 
 			rro := RowReadOption{}
 			rro.SheetName = "Sheet1"
-			rro.Parsers = map[string]IParser{
-				"t1": DefaultStrDataParser,
-			}
+			// rro.Parsers = map[string]IParser{
+			// 	"t1": DefaultStrDataParser,
+			// }
 
 			cur, err := d.ReadSheetByRow(rro)
 			if err != nil {
