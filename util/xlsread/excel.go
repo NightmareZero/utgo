@@ -12,6 +12,13 @@ type Document struct {
 	h *excelize.File // file handle
 }
 
+// Close implements io.Closer
+func (d *Document) Close() (err error) {
+	err = d.h.Close()
+	d.h = nil
+	return
+}
+
 func (d *Document) ReadSheetByRow(opt ...RowReadOption) (Cursor, error) {
 	var opt1 RowReadOption = defaultRowReadOpt
 	if len(opt) > 0 {
