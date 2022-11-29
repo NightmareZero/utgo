@@ -2,6 +2,7 @@ package xlsread
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/xuri/excelize/v2"
 )
@@ -26,13 +27,21 @@ const (
 // path: 存储路径
 // @return
 // d: 操作句柄
-func Open(path string) (d *Document, e error) {
-	doc := &Document{
-		path: path,
-	}
-	f, err := excelize.OpenFile(doc.path)
+func OpenFile(path string) (d *Document, e error) {
+	doc := &Document{}
+	f, err := excelize.OpenFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("fail on open '%v', %w ", doc.path, err)
+		return nil, fmt.Errorf("fail on open '%v', %w ", path, err)
+	}
+	doc.h = f
+	return doc, nil
+}
+
+func OpenReader(reader io.Reader) (d *Document, e error) {
+	doc := &Document{}
+	f, err := excelize.OpenReader(reader)
+	if err != nil {
+		return nil, fmt.Errorf("fail on open reader, %w ", err)
 	}
 	doc.h = f
 	return doc, nil
@@ -49,6 +58,6 @@ func New(path string) (d *Document, e error) {
 		return nil, fmt.Errorf("fail on write '%v', %w", path, err)
 	}
 
-	return Open(path)
+	return OpenFile(path)
 
 }

@@ -33,7 +33,7 @@ func Test_ReadSheet1(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d, err := Open(tt.file)
+			d, err := OpenFile(tt.file)
 			if err != nil {
 				t.Error(fmt.Errorf("error opening file %v, %w", tt.file, err))
 				return

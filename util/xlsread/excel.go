@@ -9,8 +9,7 @@ import (
 )
 
 type Document struct {
-	path string
-	h    *excelize.File // file handle
+	h *excelize.File // file handle
 }
 
 func (d *Document) ReadSheetByRow(opt ...RowReadOption) (Cursor, error) {
