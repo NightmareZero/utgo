@@ -161,7 +161,7 @@ func (m *MultiForm) ParseFile(writer func(string, io.Reader, error)) {
 	m.Close()
 }
 
-func (r *Request) MultipartForm() (f MultiForm, err error) {
+func (r *Request) MultipartForm() (f *MultiForm, err error) {
 	contentType := r.Header.Get("content-type")
 	contentLen := r.ContentLength
 
@@ -180,7 +180,11 @@ func (r *Request) MultipartForm() (f MultiForm, err error) {
 		err = fmt.Errorf("failure on parse files, %w", err2)
 		return
 	}
-	f.Form = r.Request.MultipartForm
+	f = &MultiForm{
+		close: false,
+		Form:  r.Request.MultipartForm,
+		r:     r,
+	}
 
 	return
 }
