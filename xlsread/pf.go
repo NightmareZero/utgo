@@ -14,18 +14,25 @@ var (
 )
 
 type TagInfo struct {
-	row    int
-	col    int
-	parser IParser
+	row      int
+	col      int
+	parser   IParser
+	formater IFormater
 }
 
 type IParser func(string) any
 
+type IFormater func(any) (string, error)
+
 // 默认日期格式处理
-func DefaultDataParser(src string) any {
+func DefaultDateParser(src string) any {
 	excelDate := time.Date(1899, time.December, 30, 0, 0, 0, 0, time.UTC)
 	var days, _ = strconv.Atoi(src)
 	return excelDate.Add(time.Second * time.Duration(days*86400))
+}
+
+func DefaultDataFormater(tme time.Time) string {
+	return tme.Format(defaultDateFormat)
 }
 
 func DefaultStrDataParser(src string) any {
@@ -39,7 +46,7 @@ func DefaultStrDataParser(src string) any {
 	return time.Now()
 }
 
-func getTagInfo(parsers map[string]IParser, tag string) (res TagInfo) {
+func getTagInfo(tag string, parsers map[string]IParser, formaters map[string]IFormater) (res TagInfo) {
 	if len(tag) == 0 {
 		return
 	}
@@ -60,8 +67,15 @@ func getTagInfo(parsers map[string]IParser, tag string) (res TagInfo) {
 	res.row, _ = strconv.Atoi(fieldMap[pRowName])
 
 	// 读取处理器标签信息
-	pParesrName := fieldMap[pParesr]
-	res.parser = parsers[pParesrName]
+	if parsers != nil {
+		pParesrName := fieldMap[pParesr]
+		res.parser = parsers[pParesrName]
+	}
+
+	if formaters != nil {
+		pFormaterName := fieldMap[pFormater]
+		res.formater = formaters[pFormaterName]
+	}
 
 	return
 }
@@ -113,7 +127,7 @@ func parseVal(src string, dst reflect.Value, parser IParser) error {
 		if strings.Contains(src, "-") || strings.Contains(src, "\\") || strings.Contains(src, "/") {
 			t = DefaultStrDataParser(src)
 		} else {
-			t = DefaultDataParser(src)
+			t = DefaultDateParser(src)
 		}
 		dst.Set(reflect.ValueOf(t))
 
@@ -123,4 +137,23 @@ func parseVal(src string, dst reflect.Value, parser IParser) error {
 	}
 
 	return nil
+}
+
+func formatVal(src reflect.Value, formater IFormater) (string, error) {
+	// 预处理有 Parser 的
+	if formater != nil {
+		return formater(src.Interface())
+	}
+
+	// 处理常规类型
+	switch src.Interface().(type) {
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64, string, bool:
+		// 处理数字类型
+		return fmt.Sprintf("%v", src.Interface()), nil
+	case time.Time: // 处理日期类型
+		return DefaultDataFormater(src.Interface().(time.Time)), nil
+	default:
+		return "", ErrUnknownType
+
+	}
 }

@@ -38,6 +38,27 @@ func (d *Document) ReadSheetByRow(opt ...RowReadOption) (Cursor, error) {
 	return c, nil
 }
 
+func (d *Document) WriteSheetByRow(src any, opt ...RowWriteOption) (WriteCursor, error) {
+	var opt1 RowWriteOption = defaultRowWriteOpt
+	if len(opt) > 0 {
+		opt1 = opt[0]
+	}
+
+	// 读取工作表数据
+	sheetData, err := d.GetSheetData(&opt1.Option)
+	if err != nil {
+		return nil, fmt.Errorf("UnmarshalRows.getSheetData, %w ", err)
+	}
+
+	// 拼装返回类型
+	c := &RowWriteCursor{}
+	c.data = sheetData
+	c.col = opt1.Col
+	c.formaters = opt1.Formaters
+	c.data = make([][]string, opt1.Row)
+	return c, nil
+}
+
 // 将工作表中的数据根据struct中的tag插入结构体中 (目标为单个结构体)
 func (d *Document) ReadSheetByTable(dst any, opt ...*Option) error {
 	// TODO 暂时不实现
@@ -52,6 +73,10 @@ func (d *Document) ReadSheetByTable(dst any, opt ...*Option) error {
 
 func (d *Document) GetSheetData(opt *Option) ([][]string, error) {
 	return d.h.GetRows(opt.SheetName)
+}
+
+func (d *Document) WriteSheetData(opt *Option) (res [][]string, err error) {
+	return
 }
 
 var (

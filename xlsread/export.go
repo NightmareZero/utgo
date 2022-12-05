@@ -12,9 +12,10 @@ const TAG_NAME = "xlsr"
 
 // 标签项目
 const (
-	pRowName = "row" // 行标签
-	pColName = "col" // 列标签
-	pParesr  = "pp"  // 转换器标签
+	pRowName  = "row" // 行标签
+	pColName  = "col" // 列标签
+	pParesr   = "pp"  // 转换器标签
+	pFormater = "pf"  // 格式化器标签
 )
 
 const (
