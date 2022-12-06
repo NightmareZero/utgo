@@ -19,6 +19,10 @@ func (d *Document) Close() (err error) {
 	return
 }
 
+func (d *Document) Save() (err error) {
+	return d.h.Save()
+}
+
 func (d *Document) ReadSheetByRow(opt ...RowReadOption) (Cursor, error) {
 	var opt1 RowReadOption = defaultRowReadOpt
 	if len(opt) > 0 {
@@ -44,18 +48,17 @@ func (d *Document) WriteSheetByRow(src any, opt ...RowWriteOption) (WriteCursor,
 		opt1 = opt[0]
 	}
 
-	// 读取工作表数据
-	sheetData, err := d.GetSheetData(&opt1.Option)
-	if err != nil {
-		return nil, fmt.Errorf("UnmarshalRows.getSheetData, %w ", err)
-	}
-
 	// 拼装返回类型
 	c := &RowWriteCursor{}
-	c.data = sheetData
+	c.h = d.h
 	c.col = opt1.Col
+	c.row = opt1.Row - 1 // 设置初始光标位置(data中)
 	c.formaters = opt1.Formaters
-	c.data = make([][]string, opt1.Row)
+	c.opt = opt1
+
+	if c.row < 0 {
+		c.row = 0
+	}
 	return c, nil
 }
 

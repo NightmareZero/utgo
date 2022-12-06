@@ -12,7 +12,7 @@ type RowReadOption struct {
 type RowWriteOption struct {
 	Option
 	Col       int // 最大列数(过多会导致内存浪费，过少会导致数据被截断)
-	Row       int // 启示行数
+	Row       int // 开始光标所在行数
 	Formaters map[string]IFormater
 }
 

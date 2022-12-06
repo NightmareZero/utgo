@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/xuri/excelize/v2"
 )
 
 var (
@@ -139,21 +141,23 @@ func parseVal(src string, dst reflect.Value, parser IParser) error {
 	return nil
 }
 
-func formatVal(src reflect.Value, formater IFormater) (string, error) {
+func (c *RowWriteCursor) setVal(src any, col int, formater IFormater) error {
+
+	axis, _ := excelize.CoordinatesToCellName(col+1, c.row+1)
 	// 预处理有 Parser 的
-	if formater != nil {
-		return formater(src.Interface())
-	}
+	// if formater != nil {
+	// 	return formater(src)
+	// }
 
 	// 处理常规类型
-	switch src.Interface().(type) {
+	switch tsrc := src.(type) {
 	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64, string, bool:
 		// 处理数字类型
-		return fmt.Sprintf("%v", src.Interface()), nil
+		return c.h.SetCellValue(c.opt.SheetName, axis, tsrc)
 	case time.Time: // 处理日期类型
-		return DefaultDataFormater(src.Interface().(time.Time)), nil
+		return nil
 	default:
-		return "", ErrUnknownType
+		return ErrUnknownType
 
 	}
 }

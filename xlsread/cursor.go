@@ -3,6 +3,8 @@ package xlsread
 import (
 	"fmt"
 	"reflect"
+
+	"github.com/xuri/excelize/v2"
 )
 
 type Cursor interface {
@@ -12,7 +14,7 @@ type Cursor interface {
 }
 
 type WriteCursor interface {
-	Skip()
+	Next()
 	All(src any) error
 	Format(src any) error
 }
@@ -108,9 +110,10 @@ func (c *RowReadCursor) All(dst any) error {
 }
 
 type RowWriteCursor struct {
-	row       int        // 行数
-	col       int        // 默认列数
-	data      [][]string // 数据
+	h         *excelize.File // 文件句柄
+	opt       RowWriteOption // 配置
+	row       int            // 行数
+	col       int            // 最大列数(随着行数据变大而变大)
 	formaters map[string]IFormater
 }
 
@@ -125,22 +128,16 @@ func (c *RowWriteCursor) All(dst any) error {
 		return fmt.Errorf("excelr: requires a slice as 'src'")
 	}
 
-	dstVal := reflect.ValueOf(dst).Elem() // dst指向的类型 Kind = Slice
-
-	sItemTyp := dstVal.Type().Elem()
-	if sItemTyp.Kind() == reflect.Ptr {
-		sItemTyp = sItemTyp.Elem()
-	}
-
-	for i := 0; i < dstVal.Len(); i++ {
+	for i := 0; i < vDst.Len(); i++ {
 		// 创建新的结构体
-		var pVal = reflect.New(sItemTyp).Interface()
+		var pVal = vDst.Index(i).Interface()
 
 		// 单行解析
 		err := c.Format(pVal)
 		if err != nil {
 			return fmt.Errorf("Document.UnmarshalRows: unmarshal error on row %v, %w", c.row, err)
 		}
+		c.Next()
 	}
 
 	return nil
@@ -156,10 +153,7 @@ func (c *RowWriteCursor) Format(dst any) error {
 		return fmt.Errorf("excelr: requires a struct as 'src'")
 	}
 
-	// 取出本行
-	row := make([]string, c.col)
-
-	dstVal := reflect.ValueOf(dst).Elem()
+	dstVal := reflect.ValueOf(dst)
 	dstTyp := dstVal.Type()
 
 	for i := 0; i < dstVal.NumField(); i++ {
@@ -173,31 +167,20 @@ func (c *RowWriteCursor) Format(dst any) error {
 
 		// 获取标签信息
 		tagInfo := getTagInfo(field.Tag.Get(TAG_NAME), nil, c.formaters)
-		if tagInfo.col > len(row) {
-			c.col = tagInfo.col
-			rowOld := row
-			row = make([]string, c.col)
-			copy(row, rowOld)
-		}
 
 		if tagInfo.col > 0 {
-			// s := row[tagInfo.col-1]
-			var s string
-			var err error
-			s, err = formatVal(fieldVal, tagInfo.formater)
+			err := c.setVal(fieldVal.Interface(), i, tagInfo.formater)
 			if err != nil {
-				err = fmt.Errorf("error parse column %v '%v' to '%v' %w,", tagInfo.col, s, field.Name, err)
+				err = fmt.Errorf("error set %v:%v  to column '%v' %w,", field.Name, fieldVal.Interface(), tagInfo.col, err)
 				return err
 			}
-			row[c.col-1] = s
 		}
 
 	}
-	c.data = append(c.data, row)
+
 	return nil
 }
 
-// Next implements WriteCursor
-func (c *RowWriteCursor) Skip() {
-	c.data = append(c.data, nil)
+func (c *RowWriteCursor) Next() {
+	c.row++
 }

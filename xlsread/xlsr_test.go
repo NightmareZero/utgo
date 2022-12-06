@@ -62,3 +62,59 @@ func Test_ReadSheet1(t *testing.T) {
 		})
 	}
 }
+
+func Test_WriteSheet1(t *testing.T) {
+	t2 := time.Now().Add(-24 * time.Hour)
+	tests := []struct {
+		name  string
+		file  string
+		sheet string
+		dst   []ProductItem
+	}{
+		{
+			name:  "test-productItem",
+			file:  "/home/user/nzgoutil/xlsread/tmp/Sheet2.xlsx",
+			sheet: "Sheet1",
+			dst: []ProductItem{
+				{"1", "2", "3", 4, 5, t2, time.Now()},
+				{"11", "12", "13", 14, 15, time.Now(), t2},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d, err := OpenFile(tt.file)
+			if err != nil {
+				t.Error(fmt.Errorf("error opening file %v, %w", tt.file, err))
+				return
+			}
+			defer d.Close()
+
+			rwo := RowWriteOption{}
+			rwo.SheetName = "Sheet1"
+			rwo.Row = 2
+			// rro.Parsers = map[string]IParser{
+			// 	"t1": DefaultStrDataParser,
+			// }
+
+			cur, err := d.WriteSheetByRow(tt.dst, rwo)
+			if err != nil {
+				t.Error(fmt.Errorf("error read excel file %v, %w", tt.file, err))
+				return
+			}
+
+			err = cur.All(&tt.dst)
+			if err != nil {
+				t.Error(fmt.Errorf("error parse file %v, %w", tt.file, err))
+				return
+			}
+			err = d.h.Save()
+			if err != nil {
+				t.Error(fmt.Errorf("error save file %v, %w", tt.file, err))
+				return
+			}
+
+			t.Logf("haha: %+v", cur)
+		})
+	}
+}
