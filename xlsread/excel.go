@@ -3,6 +3,7 @@ package xlsread
 import (
 	"errors"
 	"fmt"
+	"io"
 	"reflect"
 
 	"github.com/xuri/excelize/v2"
@@ -21,6 +22,10 @@ func (d *Document) Close() (err error) {
 
 func (d *Document) Save() (err error) {
 	return d.h.Save()
+}
+
+func (d *Document) Write(w io.Writer) (size int64, err error) {
+	return d.h.WriteTo(w)
 }
 
 func (d *Document) ReadSheetByRow(opt ...RowReadOption) (Cursor, error) {
