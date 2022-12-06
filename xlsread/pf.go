@@ -16,25 +16,19 @@ var (
 )
 
 type TagInfo struct {
-	row      int
-	col      int
-	parser   IParser
-	formater IFormater
+	row    int
+	col    int
+	parser IParser
+	style  *CellStyle
 }
 
 type IParser func(string) any
-
-type IFormater func(any) (string, error)
 
 // 默认日期格式处理
 func DefaultDateParser(src string) any {
 	excelDate := time.Date(1899, time.December, 30, 0, 0, 0, 0, time.UTC)
 	var days, _ = strconv.Atoi(src)
 	return excelDate.Add(time.Second * time.Duration(days*86400))
-}
-
-func DefaultDataFormater(tme time.Time) string {
-	return tme.Format(defaultDateFormat)
 }
 
 func DefaultStrDataParser(src string) any {
@@ -48,7 +42,21 @@ func DefaultStrDataParser(src string) any {
 	return time.Now()
 }
 
-func getTagInfo(tag string, parsers map[string]IParser, formaters map[string]IFormater) (res TagInfo) {
+// 格式转换器
+//
+type CellStyle struct {
+	Style *excelize.Style
+	id    int
+}
+
+var (
+	DefaultDateStyleStr = "yyyy-mm-dd"
+	DefaultDateStyle    = CellStyle{
+		Style: &excelize.Style{CustomNumFmt: &DefaultDateStyleStr},
+	}
+)
+
+func getTagInfo(tag string, parsers map[string]IParser, styles map[string]CellStyle) (res TagInfo) {
 	if len(tag) == 0 {
 		return
 	}
@@ -74,9 +82,10 @@ func getTagInfo(tag string, parsers map[string]IParser, formaters map[string]IFo
 		res.parser = parsers[pParesrName]
 	}
 
-	if formaters != nil {
+	if styles != nil {
 		pFormaterName := fieldMap[pFormater]
-		res.formater = formaters[pFormaterName]
+		cs := styles[pFormaterName]
+		res.style = &cs
 	}
 
 	return
@@ -141,7 +150,7 @@ func parseVal(src string, dst reflect.Value, parser IParser) error {
 	return nil
 }
 
-func (c *RowWriteCursor) setVal(src any, col int, formater IFormater) error {
+func (c *RowWriteCursor) setVal(src any, col int, style *CellStyle) (err error) {
 
 	axis, _ := excelize.CoordinatesToCellName(col+1, c.row+1)
 	// 预处理有 Parser 的
@@ -155,6 +164,19 @@ func (c *RowWriteCursor) setVal(src any, col int, formater IFormater) error {
 		// 处理数字类型
 		return c.h.SetCellValue(c.opt.SheetName, axis, tsrc)
 	case time.Time: // 处理日期类型
+		if style == nil {
+			style = &DefaultDateStyle
+		}
+		if style.id == 0 {
+			style.id, err = c.h.NewStyle(style.Style)
+			if err != nil {
+				return err
+			}
+		}
+
+		c.h.SetCellValue(c.opt.SheetName, axis, tsrc)
+		c.h.SetCellStyle(c.opt.SheetName, axis, axis, style.id)
+
 		return nil
 	default:
 		return ErrUnknownType

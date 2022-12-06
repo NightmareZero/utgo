@@ -17,52 +17,6 @@ type ProductItem struct {
 
 }
 
-func Test_ReadSheet1(t *testing.T) {
-	tests := []struct {
-		name  string
-		file  string
-		sheet string
-		dst   []ProductItem
-	}{
-		{
-			name:  "test-productItem",
-			file:  "/home/user/nzgoutil/util/xlsread/tmp/Sheet1.xlsx",
-			sheet: "Sheet1",
-			dst:   []ProductItem{},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			d, err := OpenFile(tt.file)
-			if err != nil {
-				t.Error(fmt.Errorf("error opening file %v, %w", tt.file, err))
-				return
-			}
-
-			rro := RowReadOption{}
-			rro.SheetName = "Sheet1"
-			// rro.Parsers = map[string]IParser{
-			// 	"t1": DefaultStrDataParser,
-			// }
-
-			cur, err := d.ReadSheetByRow(rro)
-			if err != nil {
-				t.Error(fmt.Errorf("error read excel file %v, %w", tt.file, err))
-				return
-			}
-
-			cur.Next() // 跳过标题
-			err = cur.All(&tt.dst)
-			if err != nil {
-				t.Error(fmt.Errorf("error parse file %v, %w", tt.file, err))
-				return
-			}
-
-			t.Logf("haha: %+v", tt.dst)
-		})
-	}
-}
-
 func Test_WriteSheet1(t *testing.T) {
 	t2 := time.Now().Add(-24 * time.Hour)
 	tests := []struct {
@@ -115,6 +69,52 @@ func Test_WriteSheet1(t *testing.T) {
 			}
 
 			t.Logf("haha: %+v", cur)
+		})
+	}
+}
+
+func Test_ReadSheet1(t *testing.T) {
+	tests := []struct {
+		name  string
+		file  string
+		sheet string
+		dst   []ProductItem
+	}{
+		{
+			name:  "test-productItem",
+			file:  "/home/user/nzgoutil/util/xlsread/tmp/Sheet1.xlsx",
+			sheet: "Sheet1",
+			dst:   []ProductItem{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d, err := OpenFile(tt.file)
+			if err != nil {
+				t.Error(fmt.Errorf("error opening file %v, %w", tt.file, err))
+				return
+			}
+
+			rro := RowReadOption{}
+			rro.SheetName = "Sheet1"
+			// rro.Parsers = map[string]IParser{
+			// 	"t1": DefaultStrDataParser,
+			// }
+
+			cur, err := d.ReadSheetByRow(rro)
+			if err != nil {
+				t.Error(fmt.Errorf("error read excel file %v, %w", tt.file, err))
+				return
+			}
+
+			cur.Next() // 跳过标题
+			err = cur.All(&tt.dst)
+			if err != nil {
+				t.Error(fmt.Errorf("error parse file %v, %w", tt.file, err))
+				return
+			}
+
+			t.Logf("haha: %+v", tt.dst)
 		})
 	}
 }

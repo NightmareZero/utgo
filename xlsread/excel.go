@@ -53,7 +53,6 @@ func (d *Document) WriteSheetByRow(src any, opt ...RowWriteOption) (WriteCursor,
 	c.h = d.h
 	c.col = opt1.Col
 	c.row = opt1.Row - 1 // 设置初始光标位置(data中)
-	c.formaters = opt1.Formaters
 	c.opt = opt1
 
 	if c.row < 0 {

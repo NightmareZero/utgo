@@ -11,9 +11,9 @@ type RowReadOption struct {
 
 type RowWriteOption struct {
 	Option
-	Col       int // 最大列数(过多会导致内存浪费，过少会导致数据被截断)
-	Row       int // 开始光标所在行数
-	Formaters map[string]IFormater
+	Col    int // 最大列数(过多会导致内存浪费，过少会导致数据被截断)
+	Row    int // 开始光标所在行数
+	Styles map[string]CellStyle
 }
 
 // 默认单表读取选项

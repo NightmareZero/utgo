@@ -110,11 +110,10 @@ func (c *RowReadCursor) All(dst any) error {
 }
 
 type RowWriteCursor struct {
-	h         *excelize.File // 文件句柄
-	opt       RowWriteOption // 配置
-	row       int            // 行数
-	col       int            // 最大列数(随着行数据变大而变大)
-	formaters map[string]IFormater
+	h   *excelize.File // 文件句柄
+	opt RowWriteOption // 配置
+	row int            // 行数
+	col int            // 最大列数(随着行数据变大而变大)
 }
 
 // All implements WriteCursor
@@ -166,10 +165,10 @@ func (c *RowWriteCursor) Format(dst any) error {
 		}
 
 		// 获取标签信息
-		tagInfo := getTagInfo(field.Tag.Get(TAG_NAME), nil, c.formaters)
+		tagInfo := getTagInfo(field.Tag.Get(TAG_NAME), nil, c.opt.Styles)
 
 		if tagInfo.col > 0 {
-			err := c.setVal(fieldVal.Interface(), i, tagInfo.formater)
+			err := c.setVal(fieldVal.Interface(), i, tagInfo.style)
 			if err != nil {
 				err = fmt.Errorf("error set %v:%v  to column '%v' %w,", field.Name, fieldVal.Interface(), tagInfo.col, err)
 				return err
