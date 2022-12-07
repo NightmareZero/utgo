@@ -42,7 +42,9 @@ func (r *Response) Json(target any, statusCode int) error {
 
 func (r *Response) File(input io.Reader, size int64, name string) (int64, error) {
 	r.Header().Set("Content-Disposition", "attachment; filename="+name)
-	r.Header().Set("Content-Type", "application/octet-stream")
+	if size != 0 {
+		r.Header().Set("Content-Type", "application/octet-stream")
+	}
 	r.Header().Set("Content-Length", strconv.FormatInt(size, 10))
 	r.WriteHeader(http.StatusOK)
 	w, err := io.Copy(r, input)
