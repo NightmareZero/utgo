@@ -1,6 +1,7 @@
 package xlsread
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -26,6 +27,10 @@ func (d *Document) Save() (err error) {
 
 func (d *Document) Write(w io.Writer) (size int64, err error) {
 	return d.h.WriteTo(w)
+}
+
+func (d *Document) WriteBuffer() (*bytes.Buffer, error) {
+	return d.h.WriteToBuffer()
 }
 
 func (d *Document) ReadSheetByRow(opt ...RowReadOption) (Cursor, error) {
