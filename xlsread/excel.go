@@ -52,7 +52,7 @@ func (d *Document) ReadSheetByRow(opt ...RowReadOption) (Cursor, error) {
 	return c, nil
 }
 
-func (d *Document) WriteSheetByRow(src any, opt ...RowWriteOption) (WriteCursor, error) {
+func (d *Document) WriteSheetByRow(opt ...RowWriteOption) WriteCursor {
 	var opt1 RowWriteOption = defaultRowWriteOpt
 	if len(opt) > 0 {
 		opt1 = opt[0]
@@ -68,7 +68,7 @@ func (d *Document) WriteSheetByRow(src any, opt ...RowWriteOption) (WriteCursor,
 	if c.row < 0 {
 		c.row = 0
 	}
-	return c, nil
+	return c
 }
 
 // 将工作表中的数据根据struct中的tag插入结构体中 (目标为单个结构体)

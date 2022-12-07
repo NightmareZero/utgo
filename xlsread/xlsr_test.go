@@ -51,12 +51,7 @@ func Test_WriteSheet1(t *testing.T) {
 			// 	"t1": DefaultStrDataParser,
 			// }
 
-			cur, err := d.WriteSheetByRow(tt.dst, rwo)
-			if err != nil {
-				t.Error(fmt.Errorf("error read excel file %v, %w", tt.file, err))
-				return
-			}
-
+			cur := d.WriteSheetByRow()
 			err = cur.All(&tt.dst)
 			if err != nil {
 				t.Error(fmt.Errorf("error parse file %v, %w", tt.file, err))

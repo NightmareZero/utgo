@@ -53,7 +53,7 @@ func (c *RowReadCursor) Parse(dst any) error {
 		}
 
 		// 获取标签信息
-		tagInfo := getTagInfo(field.Tag.Get(TAG_NAME), c.parsers, nil)
+		tagInfo := getTagInfo(field.Name, field.Tag.Get(TAG_NAME), c.parsers, nil)
 		if 0 < tagInfo.col && tagInfo.col <= len(row) {
 			s := row[tagInfo.col-1]
 
@@ -165,10 +165,10 @@ func (c *RowWriteCursor) Format(dst any) error {
 		}
 
 		// 获取标签信息
-		tagInfo := getTagInfo(field.Tag.Get(TAG_NAME), nil, c.opt.Styles)
+		tagInfo := getTagInfo(field.Name, field.Tag.Get(TAG_NAME), nil, c.opt.Styles)
 
 		if tagInfo.col > 0 {
-			err := c.setVal(fieldVal.Interface(), i, tagInfo.style)
+			err := c.setVal(fieldVal.Interface(), tagInfo.col, tagInfo.style)
 			if err != nil {
 				err = fmt.Errorf("error set %v:%v  to column '%v' %w,", field.Name, fieldVal.Interface(), tagInfo.col, err)
 				return err

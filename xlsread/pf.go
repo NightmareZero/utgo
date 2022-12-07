@@ -16,6 +16,7 @@ var (
 )
 
 type TagInfo struct {
+	name   string
 	row    int
 	col    int
 	parser IParser
@@ -43,7 +44,6 @@ func DefaultStrDataParser(src string) any {
 }
 
 // 格式转换器
-//
 type CellStyle struct {
 	Style *excelize.Style
 	id    int
@@ -56,7 +56,7 @@ var (
 	}
 )
 
-func getTagInfo(tag string, parsers map[string]IParser, styles map[string]CellStyle) (res TagInfo) {
+func getTagInfo(name string, tag string, parsers map[string]IParser, styles map[string]CellStyle) (res TagInfo) {
 	if len(tag) == 0 {
 		return
 	}
@@ -73,6 +73,7 @@ func getTagInfo(tag string, parsers map[string]IParser, styles map[string]CellSt
 	}
 
 	// 读取行列标签信息
+	res.name = name
 	res.col, _ = strconv.Atoi(fieldMap[pColName])
 	res.row, _ = strconv.Atoi(fieldMap[pRowName])
 
@@ -152,7 +153,7 @@ func parseVal(src string, dst reflect.Value, parser IParser) error {
 
 func (c *RowWriteCursor) setVal(src any, col int, style *CellStyle) (err error) {
 
-	axis, _ := excelize.CoordinatesToCellName(col+1, c.row+1)
+	axis, _ := excelize.CoordinatesToCellName(col, c.row+1)
 	// 预处理有 Parser 的
 	// if formater != nil {
 	// 	return formater(src)
