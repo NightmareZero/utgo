@@ -130,7 +130,7 @@ func parseVal(src string, dst reflect.Value, parser IParser) error {
 
 	case bool: // 处理布尔类型
 		lowerSrc := strings.ToLower(src)
-		if lowerSrc == "true" || lowerSrc == "1" || lowerSrc == "yes" {
+		if lowerSrc == "true" || lowerSrc == "1" || lowerSrc == "yes" || lowerSrc == "是" {
 			dst.SetBool(true)
 		}
 
