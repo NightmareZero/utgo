@@ -18,10 +18,10 @@ func NewJwtGenrator[T any](key []byte, container T) (jg *JwtGenerator[T], err er
 	}
 
 	jg = &JwtGenerator[T]{
-		key: key,
+		key: append(key, ' '),
 	}
 
-	keyReader := bytes.NewReader(key)
+	keyReader := bytes.NewReader(jg.key)
 	jg.pvKey, err = ecdsa.GenerateKey(elliptic.P256(), keyReader)
 	if err != nil {
 		return nil, fmt.Errorf("NewJwtGenrator: generate key error %w", err)
