@@ -29,24 +29,29 @@ func NewJwtGenrator[T any](key []byte, container T) (jg *JwtGenerator[T], err er
 		jwt.ECDSAPrivateKey(jg.pvKey),
 	)
 
+	if jg.ExpMinute == 0 {
+		jg.ExpMinute = 180
+	}
+
 	return
 }
 
 type JwtGenerator[T any] struct {
-	key    []byte
-	pvKey  *ecdsa.PrivateKey
-	pubKey ecdsa.PublicKey
-	alg    *jwt.ECDSASHA
+	key       []byte
+	pvKey     *ecdsa.PrivateKey
+	pubKey    ecdsa.PublicKey
+	alg       *jwt.ECDSASHA
+	ExpMinute int
 }
 
 func (g *JwtGenerator[T]) NewToken(u T) (token []byte, err error) {
 	now := time.Now()
 	pl := JwtToken[T]{
 		Payload: jwt.Payload{
-			Issuer:         "dt01",
-			Subject:        "login",
+			Issuer:         "nz",
+			Subject:        "token",
 			Audience:       jwt.Audience{},
-			ExpirationTime: jwt.NumericDate(now.Add(3 * time.Hour)),
+			ExpirationTime: jwt.NumericDate(now.Add(time.Duration(g.ExpMinute) * time.Minute)),
 			NotBefore:      jwt.NumericDate(now.Add(30 * time.Minute)),
 			IssuedAt:       jwt.NumericDate(now),
 			JWTID:          idg.UuidV1().Str22(),
