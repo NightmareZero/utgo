@@ -1,4 +1,4 @@
-package jwt3
+package jwtg
 
 import (
 	"bytes"
