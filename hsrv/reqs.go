@@ -8,6 +8,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
+	"path"
 	"strconv"
 	"strings"
 )
@@ -41,18 +42,52 @@ func (r *Response) Json(target any, statusCode int) error {
 }
 
 func (r *Response) File(input io.Reader, size int64, name string) (int64, error) {
-	r.Header().Set("Content-Disposition", "attachment; filename="+name)
-	if size != 0 {
-		r.Header().Set("Content-Type", "application/octet-stream")
+	ct, down := getContentTypeByFilename(name)
+	cd := ""
+	if down {
+		cd = "attachment; filename=" + name
+	} else {
+		cd = " filename=" + name
 	}
-	r.Header().Set("Content-Length", strconv.FormatInt(size, 10))
+
+	r.Header().Set("Content-Disposition", cd)
+	r.Header().Set("Content-Type", ct)
+	if size > 0 {
+		r.Header().Set("Content-Length", strconv.FormatInt(size, 10))
+	}
 	r.WriteHeader(http.StatusOK)
+
 	w, err := io.Copy(r, input)
 	if err != nil {
 		return w, fmt.Errorf("fail on response file, %w", err)
 	}
 
+	r.Header().Set("Content-Length", strconv.FormatInt(size, 10))
+
 	return w, nil
+}
+
+func getContentTypeByFilename(name string) (ct string, down bool) {
+	lName := strings.ToLower(name)
+	s := path.Ext(lName)
+
+	switch s {
+	case ".jpg":
+		fallthrough
+	case ".jpeg":
+		return "image/jpeg", false
+	case ".png":
+		return "image/png", false
+	case ".svg":
+		return "image/svg+xml", false
+	case ".ico":
+		return "image/x-icon", false
+	case ".tif":
+		return "image/tiff", false
+	}
+
+	return "application/octet-stream", true
+
 }
 
 // Request=============================================================
