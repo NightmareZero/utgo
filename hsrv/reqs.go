@@ -111,10 +111,6 @@ func (r *Request) Text() (string, error) {
 
 func (r *Request) Json(target any) error {
 	defer r.Body.Close()
-	contentType := r.Header.Get("content-type")
-	if !strings.Contains(contentType, "application/json") {
-		return fmt.Errorf("content-type must be application/json")
-	}
 
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
