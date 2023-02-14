@@ -13,12 +13,8 @@ import (
 
 // 生成Jwt生成器
 func NewJwtGenrator[T any](key []byte, container T) (jg *JwtGenerator[T], err error) {
-	if len(key) < 32 {
-		return nil, fmt.Errorf("too short for private key, must be 32 bytes")
-	}
-
-	jg = &JwtGenerator[T]{
-		key: append(key, ' '),
+	if len(key) < 128 {
+		return nil, fmt.Errorf("too short for private key, must be 128 bytes at least")
 	}
 
 	keyReader := bytes.NewReader(jg.key)
