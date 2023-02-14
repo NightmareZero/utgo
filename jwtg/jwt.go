@@ -17,7 +17,7 @@ func NewJwtGenrator[T any](key []byte, container T) (jg *JwtGenerator[T], err er
 		return nil, fmt.Errorf("too short for private key, must be 128 bytes at least")
 	}
 
-	jg.key = key
+	jg = &JwtGenerator[T]{key: key}
 	keyReader := bytes.NewReader(jg.key)
 	jg.pvKey, err = ecdsa.GenerateKey(elliptic.P256(), keyReader)
 	if err != nil {
