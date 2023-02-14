@@ -29,7 +29,7 @@ type Server struct {
 	Config           Config                  // 配置
 	ErrorHandler     ErrorHandler            // 统一错误处理
 	NotFoundHandler  RequestHandler          // 统一404处理
-	requestCtxGetter func(*http.Request) any // 上下文生成器
+	RequestCtxGetter func(*http.Request) any // 上下文生成器
 
 	middlewares []_middleware         // 内部 中间件列表
 	handleMap   map[string]urlHandler // 内部 路由表
@@ -57,7 +57,7 @@ func NewServer(config Config) *Server {
 		handleMap:        map[string]urlHandler{},
 		ErrorHandler:     defaultPanicHandler,
 		NotFoundHandler:  defaultNotFoundHandler,
-		requestCtxGetter: nil,
+		RequestCtxGetter: nil,
 	}
 	return serv
 }

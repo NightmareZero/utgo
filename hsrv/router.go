@@ -46,7 +46,7 @@ type middlewaredRouter struct {
 }
 
 func (u middlewaredRouter) ServeHTTP(response http.ResponseWriter, request *http.Request) {
-	req, res := Request{request, u.u.s, u.u.s.requestCtxGetter(request)},
+	req, res := Request{request, u.u.s, u.u.s.RequestCtxGetter(request)},
 		Response{response}
 	defer requestRecover(u.u.s, res, req)
 
