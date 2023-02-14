@@ -23,12 +23,13 @@ const WebContextVName CtxTag = "WebContext"
 type Server struct {
 	serveMux *http.ServeMux
 
-	Ctx             context.Context    // 全局上下文
-	cancel          context.CancelFunc // 终止函数
-	Logger          Logger             // 日志输出
-	Config          Config             // 配置
-	ErrorHandler    ErrorHandler       // 统一错误处理
-	NotFoundHandler RequestHandler     // 统一404处理
+	Ctx              context.Context         // 全局上下文
+	cancel           context.CancelFunc      // 终止函数
+	Logger           Logger                  // 日志输出
+	Config           Config                  // 配置
+	ErrorHandler     ErrorHandler            // 统一错误处理
+	NotFoundHandler  RequestHandler          // 统一404处理
+	requestCtxGetter func(*http.Request) any // 上下文生成器
 
 	middlewares []_middleware         // 内部 中间件列表
 	handleMap   map[string]urlHandler // 内部 路由表
@@ -51,11 +52,12 @@ type TlsConfig struct {
 
 func NewServer(config Config) *Server {
 	var serv = &Server{
-		Config:          config,
-		Logger:          defaultLogger,
-		handleMap:       map[string]urlHandler{},
-		ErrorHandler:    defaultPanicHandler,
-		NotFoundHandler: defaultNotFoundHandler,
+		Config:           config,
+		Logger:           defaultLogger,
+		handleMap:        map[string]urlHandler{},
+		ErrorHandler:     defaultPanicHandler,
+		NotFoundHandler:  defaultNotFoundHandler,
+		requestCtxGetter: nil,
 	}
 	return serv
 }

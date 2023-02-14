@@ -14,7 +14,7 @@ type urlHandler struct {
 }
 
 func (u urlHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
-	u.serveHTTP(Response{response}, Request{request})
+	u.serveHTTP(Response{response}, Request{request, u.s, u.s.requestCtxGetter(request)})
 }
 
 func (u urlHandler) serveHTTP(response Response, request Request) {
@@ -39,17 +39,28 @@ func requestRecover(s *Server, response Response, request Request) {
 
 func doRecover(i any, s *Server, request Request, response Response) {
 	var err error
-	var stack = [4096]byte{}
-	runtime.Stack(stack[:], false)
+	stack := make([]byte, 4096)
+
+	size := 0
+	for {
+		size = runtime.Stack(stack, false)
+		// The size of the buffer may be not enough to hold the stacktrace,
+		// so double the buffer size
+		if size == len(stack) {
+			stack = make([]byte, len(stack)<<1)
+			continue
+		}
+		break
+	}
 	switch ii := i.(type) {
 	case error:
-		err = fmt.Errorf("panic: %+v,%+v", ii, string(stack[:]))
+		err = fmt.Errorf("panic: %+v,%v", ii, string(stack[:size]))
 	case string:
-		err = fmt.Errorf("panic: %+v,%+v", ii, string(stack[:]))
+		err = fmt.Errorf("panic: %+v,%v", ii, string(stack[:size]))
 	case int:
-		err = fmt.Errorf("error code: %v,%+v", ii, string(stack[:]))
+		err = fmt.Errorf("error code: %v,%v", ii, string(stack[:size]))
 	default:
-		err = fmt.Errorf("panic: %+v", string(stack[:]))
+		err = fmt.Errorf("panic: %v", string(stack[:size]))
 	}
 
 	func(request Request, response Response) {
@@ -71,7 +82,7 @@ func defaultNotFoundHandler(w Response, r Request) {
 }
 
 func defaultPanicHandler(w Response, r Request, err error) {
-	defaultLogger.Errorf("%+v", err)
+	r.Server.Logger.Errorf("%+v", err)
 
 	w.Text("internal server error", http.StatusInternalServerError)
 }
