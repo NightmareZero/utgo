@@ -57,7 +57,7 @@ func NewServer(config Config) *Server {
 		handleMap:        map[string]urlHandler{},
 		ErrorHandler:     defaultPanicHandler,
 		NotFoundHandler:  defaultNotFoundHandler,
-		RequestCtxGetter: nil,
+		RequestCtxGetter: func(r *http.Request) any { return nil },
 	}
 	return serv
 }
