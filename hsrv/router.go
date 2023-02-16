@@ -8,7 +8,7 @@ import (
 func (s *Server) buildRouter() {
 
 	for k, uh := range s.handleMap {
-		s.Logger.Infof("hSrv: listen %v", k)
+		s.Logger.Debugf("hSrv: listen %v", k)
 		var md []Middleware
 		for k2, mas := range s.middlewares {
 			if strings.HasPrefix(k, mas.prefix) {
