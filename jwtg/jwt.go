@@ -1,9 +1,6 @@
 package jwtg
 
 import (
-	"bytes"
-	"crypto/ecdsa"
-	"crypto/elliptic"
 	"fmt"
 	"time"
 
@@ -18,17 +15,7 @@ func NewJwtGenrator[T any](key []byte, container T) (jg *JwtGenerator[T], err er
 	}
 
 	jg = &JwtGenerator[T]{key: key}
-	keyReader := bytes.NewReader(jg.key)
-	jg.pvKey, err = ecdsa.GenerateKey(elliptic.P256(), keyReader)
-	if err != nil {
-		return nil, fmt.Errorf("NewJwtGenrator: generate key error %w", err)
-	}
-	jg.pubKey = jg.pvKey.PublicKey
-
-	jg.alg = jwt.NewES256(
-		jwt.ECDSAPublicKey(&jg.pubKey),
-		jwt.ECDSAPrivateKey(jg.pvKey),
-	)
+	jg.alg = jwt.NewHS256(key)
 
 	if jg.ExpMinute == 0 {
 		jg.ExpMinute = 180
@@ -39,13 +26,11 @@ func NewJwtGenrator[T any](key []byte, container T) (jg *JwtGenerator[T], err er
 
 type JwtGenerator[T any] struct {
 	key       []byte
-	pvKey     *ecdsa.PrivateKey
-	pubKey    ecdsa.PublicKey
-	alg       *jwt.ECDSASHA
+	alg       *jwt.HMACSHA
 	ExpMinute int
 }
 
-func (g *JwtGenerator[T]) NewToken(u T) (token []byte, err error) {
+func (g *JwtGenerator[T]) Sign(u T) (token []byte, err error) {
 	now := time.Now()
 	pl := JwtToken[T]{
 		Payload: jwt.Payload{
@@ -60,6 +45,12 @@ func (g *JwtGenerator[T]) NewToken(u T) (token []byte, err error) {
 		Tag: u,
 	}
 	token, err = jwt.Sign(pl, g.alg)
+	return
+}
+
+func (g *JwtGenerator[T]) Verify(b []byte) (token JwtToken[T], err error) {
+	token = JwtToken[T]{}
+	_, err = jwt.Verify(b, g.alg, &token)
 	return
 }
 
