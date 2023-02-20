@@ -32,9 +32,20 @@ func Recover(msg string, goAfterRecover func(err error)) {
 }
 
 func doRecover(msg string, pan any, goAfterRecover func(err error)) {
-	var buf [4096]byte
-	runtime.Stack(buf[:], false)
-	err := errors.New("panic: " + msg + " , type unknown")
+	var err error
+	buf := make([]byte, 4096)
+
+	size := 0
+	for {
+		size = runtime.Stack(buf, false)
+		// The size of the buffer may be not enough to hold the stacktrace,
+		// so double the buffer size
+		if size == len(buf) {
+			buf = make([]byte, len(buf)<<1)
+			continue
+		}
+		break
+	}
 	switch ff := pan.(type) {
 	case string:
 		err = errors.New("panic: " + msg + " , " + ff + string(buf[:]))
