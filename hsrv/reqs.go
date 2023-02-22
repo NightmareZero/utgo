@@ -224,20 +224,20 @@ func (m *MultiForm) ParseFile(writer func(string, io.Reader, error)) {
 }
 
 func (r *Request) MultipartForm() (f *MultiForm, err error) {
+	return r.MultipartFormLarge(16)
+}
+
+// 处理更大的formdata
+// size: 单位为 Mib
+func (r *Request) MultipartFormLarge(size int64) (f *MultiForm, err error) {
 	contentType := r.Header.Get("content-type")
-	contentLen := r.ContentLength
 
 	if !strings.Contains(contentType, "multipart/form-data") {
 		err = fmt.Errorf("content-type must be multipart/form-data")
 		return
 	}
 
-	var err2 error
-	if contentLen < 4*1024*1024 {
-		err2 = r.ParseMultipartForm(4 * 1024 * 1024)
-	} else {
-		err2 = r.ParseMultipartForm(16 * 1024 * 1024)
-	}
+	var err2 error = r.ParseMultipartForm(2 * size * 1024 * 1024)
 	if err2 != nil {
 		err = fmt.Errorf("failure on parse files, %w", err2)
 		return
