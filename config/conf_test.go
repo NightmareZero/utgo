@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/NightmareZero/nzgoutil/common"
 	"github.com/NightmareZero/nzgoutil/config"
+	"github.com/NightmareZero/nzgoutil/util"
 )
 
 func Test_SplitBy(t *testing.T) {
@@ -38,7 +38,7 @@ func Test_SplitBy(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := common.SplitBy(tt.content, tt.spliter, tt.escape)
+			s := util.SplitBy(tt.content, tt.spliter, tt.escape)
 			t.Logf("result %v", s)
 		})
 	}

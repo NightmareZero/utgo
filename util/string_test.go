@@ -1,10 +1,10 @@
-package common_test
+package util_test
 
 import (
 	"reflect"
 	"testing"
 
-	"github.com/NightmareZero/nzgoutil/common"
+	common "github.com/NightmareZero/nzgoutil/util"
 )
 
 func Test_SplitBy(t *testing.T) {

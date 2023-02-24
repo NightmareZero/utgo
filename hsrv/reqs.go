@@ -13,6 +13,8 @@ import (
 	"path"
 	"strconv"
 	"strings"
+
+	"github.com/NightmareZero/nzgoutil/util"
 )
 
 type RequestHandler func(Response, Request)
@@ -23,12 +25,32 @@ type ErrorHandler func(Response, Request, error)
 
 type Response struct {
 	http.ResponseWriter
+	Request Request
+	after   []PostProcessor
+}
+
+func (r *Response) doResponse(code int, body []byte) (err error) {
+	if r.after != nil {
+		for _, pp := range r.after {
+			pp.After(*r, r.Request)
+		}
+	}
+
+	r.WriteHeader(code)
+	_, err = r.Write(body)
+	return
+}
+
+func (r *Response) doResponse1(code int, body io.Reader) (wirtten int64, err error) {
+
+	r.WriteHeader(http.StatusOK)
+	return io.Copy(r, body)
+
 }
 
 func (r *Response) Text(txt string, statusCode int) (err error) {
 	r.Header().Add("Content-Type", "text/plain; charset=utf-8")
-	r.WriteHeader(statusCode)
-	_, err = r.Write([]byte(txt))
+	r.doResponse(statusCode, util.String2Bytes(txt))
 	return
 }
 
@@ -38,8 +60,7 @@ func (r *Response) Json(target any, statusCode int) error {
 		return fmt.Errorf("error on unmarshal json, %w", err)
 	}
 	r.Header().Add("Content-Type", "application/json; charset=utf-8")
-	r.WriteHeader(statusCode)
-	_, err = r.Write([]byte(b))
+	r.doResponse(statusCode, b)
 	return err
 }
 
@@ -57,14 +78,11 @@ func (r *Response) File(input io.Reader, size int64, name string) (int64, error)
 	if size > 0 {
 		r.Header().Set("Content-Length", strconv.FormatInt(size, 10))
 	}
-	r.WriteHeader(http.StatusOK)
 
-	w, err := io.Copy(r, input)
+	w, err := r.doResponse1(http.StatusOK, input)
 	if err != nil {
 		return w, fmt.Errorf("fail on response file, %w", err)
 	}
-
-	r.Header().Set("Content-Length", strconv.FormatInt(size, 10))
 
 	return w, nil
 }

@@ -14,7 +14,9 @@ type urlHandler struct {
 }
 
 func (u urlHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
-	u.serveHTTP(Response{response}, Request{request, u.s, u.s.RequestCtxGetter(request)})
+	req := Request{request, u.s, u.s.RequestCtxGetter(request)}
+	res := Response{response, req, nil}
+	u.serveHTTP(res, req)
 }
 
 func (u urlHandler) serveHTTP(response Response, request Request) {

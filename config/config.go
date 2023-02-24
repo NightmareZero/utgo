@@ -6,8 +6,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/NightmareZero/nzgoutil/common"
 	"github.com/NightmareZero/nzgoutil/config/prop"
+	"github.com/NightmareZero/nzgoutil/util"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 )
@@ -26,7 +26,7 @@ type Config struct {
 }
 
 func (c *Config) Val(path string) (ret any, getted bool) {
-	s := common.SplitBy(path, ".", "\\")
+	s := util.SplitBy(path, ".", "\\")
 	var cursor any = c.conf
 	for _, v := range s {
 		parent, ok := cursor.(map[string]any)

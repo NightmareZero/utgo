@@ -31,8 +31,8 @@ type Server struct {
 	NotFoundHandler  RequestHandler          // 统一404处理
 	RequestCtxGetter func(*http.Request) any // 上下文生成器
 
-	middlewares []_middleware         // 内部 中间件列表
-	handleMap   map[string]urlHandler // 内部 路由表
+	middleware []_middleware         // 内部 中间件列表
+	handleMap  map[string]urlHandler // 内部 路由表
 
 	WebContext any // 全局web上下文(所有连接共享), 会被放到Request中
 }
@@ -63,14 +63,24 @@ func NewServer(config Config) *Server {
 }
 
 // function around handler
-// prefix: url prefix for middleware
-func (s *Server) Middleware(prefix string, middleware Middleware) {
-	s.middlewares = append(s.middlewares, _middleware{
+// prefix: url prefix for interceptor
+func (s *Server) Interceptor(prefix string, interceptor Interceptor) {
+	s.middleware = append(s.middleware, _middleware{
 		prefix: prefix,
-		md:     middleware,
+		before: interceptor,
 	})
-	sort.SliceStable(s.middlewares, func(i, j int) bool {
-		return s.middlewares[i].md.Order() < s.middlewares[j].md.Order()
+	sort.SliceStable(s.middleware, func(i, j int) bool {
+		return s.middleware[i].before.Order() < s.middleware[j].before.Order()
+	})
+}
+
+func (s *Server) PostProcessor(prefix string, postProcessor PostProcessor) {
+	s.middleware = append(s.middleware, _middleware{
+		prefix: prefix,
+		after:  postProcessor,
+	})
+	sort.SliceStable(s.middleware, func(i, j int) bool {
+		return s.middleware[i].before.Order() < s.middleware[j].before.Order()
 	})
 }
 

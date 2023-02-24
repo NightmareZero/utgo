@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/NightmareZero/nzgoutil/common"
 	"github.com/NightmareZero/nzgoutil/uos"
+	"github.com/NightmareZero/nzgoutil/util"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -53,7 +53,7 @@ func getWriterAsync(logPath string, name string) io.Writer {
 }
 
 func getZapCores(config LogConfig, eConfig zap.Config) (ret []zapcore.Core) {
-	fixedPath := uos.FixPathEndSlash(common.If(len(config.Path) > 0, config.Path, "./log/"))
+	fixedPath := uos.FixPathEndSlash(util.If(len(config.Path) > 0, config.Path, "./log/"))
 
 	// 初始化 log 文件输出
 	logWriter := zapcore.AddSync(getFileWriter(config.Sync, fixedPath, "log"))
@@ -63,7 +63,7 @@ func getZapCores(config LogConfig, eConfig zap.Config) (ret []zapcore.Core) {
 
 	// 如果未开启日志合并
 	if !config.MergeErrorLog {
-		fixedErrPath := uos.FixPathEndSlash(common.If(len(config.ErrPath) > 0, config.ErrPath, "./log/"))
+		fixedErrPath := uos.FixPathEndSlash(util.If(len(config.ErrPath) > 0, config.ErrPath, "./log/"))
 		errorLogWriter := zapcore.AddSync(getFileWriter(config.Sync, fixedErrPath, "err"))
 		ret = append(ret, zapcore.NewCore(
 			zapcore.NewConsoleEncoder(eConfig.EncoderConfig),

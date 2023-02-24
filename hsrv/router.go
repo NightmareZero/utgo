@@ -7,23 +7,30 @@ import (
 
 func (s *Server) buildRouter() {
 
-	for k, uh := range s.handleMap {
-		s.Logger.Debugf("hSrv: listen %v", k)
-		var md []Middleware
-		for k2, mas := range s.middlewares {
-			if strings.HasPrefix(k, mas.prefix) {
-				md = append(md, s.middlewares[k2].md)
+	for url, urlHandler := range s.handleMap {
+		s.Logger.Debugf("hSrv: listen %v", url)
+		var mdi []Interceptor
+		var mdp []PostProcessor
+		for k2, mas := range s.middleware {
+			if strings.HasPrefix(url, mas.prefix) {
+				if mas.before != nil {
+					mdi = append(mdi, s.middleware[k2].before)
+				}
+				if mas.after != nil {
+					mdp = append(mdp, s.middleware[k2].after)
+				}
 			}
 		}
 
-		if len(md) > 0 {
-			router := middlewaredRouter{
-				u:   uh,
-				mds: md,
+		if len(mdi) > 0 || len(mdp) > 0 {
+			router := middlewareRouter{
+				u:      urlHandler,
+				before: mdi,
+				after:  mdp,
 			}
-			s.serveMux.Handle(k, router)
+			s.serveMux.Handle(url, router)
 		} else {
-			s.serveMux.Handle(k, uh)
+			s.serveMux.Handle(url, urlHandler)
 		}
 
 	}
@@ -31,26 +38,32 @@ func (s *Server) buildRouter() {
 
 type _middleware struct {
 	prefix string // 拦截路径
-	md     Middleware
+	before Interceptor
+	after  PostProcessor
 }
 
-type Middleware interface {
+type Interceptor interface {
 	Order() int // 顺序
 	Before(Response, Request) bool
-	After(Response, Request)
 }
 
-type middlewaredRouter struct {
-	u   urlHandler
-	mds []Middleware
+type PostProcessor interface {
+	Order() int // 顺序
+	After(Response, Request) bool
 }
 
-func (u middlewaredRouter) ServeHTTP(response http.ResponseWriter, request *http.Request) {
-	req, res := Request{request, u.u.s, u.u.s.RequestCtxGetter(request)},
-		Response{response}
+type middlewareRouter struct {
+	u      urlHandler
+	before []Interceptor
+	after  []PostProcessor
+}
+
+func (u middlewareRouter) ServeHTTP(response http.ResponseWriter, request *http.Request) {
+	req := Request{request, u.u.s, u.u.s.RequestCtxGetter(request)}
+	res := Response{response, req, u.after}
 	defer requestRecover(u.u.s, res, req)
 
-	for _, m := range u.mds {
+	for _, m := range u.before {
 		if !m.Before(res, req) {
 			return
 		}
@@ -58,7 +71,7 @@ func (u middlewaredRouter) ServeHTTP(response http.ResponseWriter, request *http
 
 	u.u.serveHTTP(res, req)
 
-	for _, m := range u.mds {
-		m.After(res, req)
-	}
+	// for _, m := range u.mds {
+	// 	m.After(res, req)
+	// }
 }
