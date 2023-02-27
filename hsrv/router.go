@@ -49,7 +49,7 @@ type Interceptor interface {
 
 type PostProcessor interface {
 	Order() int // 顺序
-	After(Response, Request) bool
+	After(Response) bool
 }
 
 type middlewareRouter struct {
@@ -58,9 +58,25 @@ type middlewareRouter struct {
 	after  []PostProcessor
 }
 
+type reqCtx struct {
+	Data   any
+	after  []PostProcessor
+	Server *Server
+	Req    *http.Request
+	Res    http.ResponseWriter
+}
+
 func (u middlewareRouter) ServeHTTP(response http.ResponseWriter, request *http.Request) {
-	req := Request{request, u.u.s, u.u.s.RequestCtxGetter(request)}
-	res := Response{response, req, u.after}
+	reqCtx := reqCtx{
+		Data:   u.u.s.CtxDataGetter(request),
+		Server: u.u.s,
+		after:  u.after,
+		Req:    request,
+		Res:    response,
+	}
+
+	req := Request{request, &reqCtx}
+	res := Response{response, &reqCtx}
 	defer requestRecover(u.u.s, res, req)
 
 	for _, m := range u.before {

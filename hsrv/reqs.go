@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iotplatform/common/util"
 	"mime/multipart"
 	"net"
 	"net/http"
@@ -13,8 +14,6 @@ import (
 	"path"
 	"strconv"
 	"strings"
-
-	"github.com/NightmareZero/nzgoutil/util"
 )
 
 type RequestHandler func(Response, Request)
@@ -25,14 +24,13 @@ type ErrorHandler func(Response, Request, error)
 
 type Response struct {
 	http.ResponseWriter
-	Request Request
-	after   []PostProcessor
+	Ctx *reqCtx
 }
 
 func (r *Response) doResponse(code int, body []byte) (err error) {
-	if r.after != nil {
-		for _, pp := range r.after {
-			pp.After(*r, r.Request)
+	if r.Ctx.after != nil {
+		for _, pp := range r.Ctx.after {
+			pp.After(*r)
 		}
 	}
 
@@ -114,8 +112,7 @@ func getContentTypeByFilename(name string) (ct string, down bool) {
 
 type Request struct {
 	*http.Request
-	Server *Server
-	Ctx    any
+	Ctx *reqCtx
 }
 
 func (r *Request) IP() (string, error) {

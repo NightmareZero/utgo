@@ -14,8 +14,15 @@ type urlHandler struct {
 }
 
 func (u urlHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
-	req := Request{request, u.s, u.s.RequestCtxGetter(request)}
-	res := Response{response, req, nil}
+	reqCtx := reqCtx{
+		Data:   u.s.CtxDataGetter(request),
+		Server: u.s,
+		after:  nil,
+		Req:    request,
+		Res:    response,
+	}
+	req := Request{request, &reqCtx}
+	res := Response{response, &reqCtx}
 	u.serveHTTP(res, req)
 }
 
@@ -84,7 +91,7 @@ func defaultNotFoundHandler(w Response, r Request) {
 }
 
 func defaultPanicHandler(w Response, r Request, err error) {
-	r.Server.Logger.Errorf("%+v", err)
+	r.Ctx.Server.Logger.Errorf("%+v", err)
 
 	w.Text("internal server error", http.StatusInternalServerError)
 }
