@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"iotplatform/common/util"
 	"mime/multipart"
 	"net"
 	"net/http"
@@ -14,6 +13,8 @@ import (
 	"path"
 	"strconv"
 	"strings"
+
+	"github.com/NightmareZero/nzgoutil/util"
 )
 
 type RequestHandler func(Response, Request)
