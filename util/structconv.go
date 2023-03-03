@@ -33,7 +33,7 @@ func ToTimeHookFunc() mapstructure.DecodeHookFunc {
 
 		switch src.Kind() {
 		case reflect.String:
-			return time.Parse(time.DateTime, data.(string))
+			return FormatDateTime(data.(string))
 		case reflect.Float64:
 			return time.Unix(0, int64(data.(float64))*int64(time.Millisecond)), nil
 		case reflect.Int64:
