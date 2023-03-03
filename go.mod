@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/gbrlsnchs/jwt/v3 v3.0.1
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pkg/errors v0.9.1
 	github.com/rs/cors v1.8.2
 	github.com/xuri/excelize/v2 v2.6.1
