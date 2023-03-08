@@ -2,6 +2,7 @@ package client
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -10,7 +11,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 )
 
 // 常规请求定义
@@ -22,9 +22,9 @@ type ApiClient[R any] struct {
 }
 
 type Conf struct {
-	Timeout int
 	CrtPath string
 	KeyPath string
+	Timeout int
 }
 
 // 执行网络请求
@@ -35,11 +35,16 @@ type Conf struct {
 // qp:  url中的参数，要求类似 "id=123" 样式,
 func (a ApiClient[R]) Req(req any, h map[string]string, qp ...string) (R, error) {
 	var r R
-	return r, a.doReq(req, &r, h, qp...)
+	return r, a.doReq(context.Background(), req, &r, h, qp...)
+}
+
+func (a ApiClient[R]) ReqWithCtx(ctx context.Context, req any, h map[string]string, qp ...string) (R, error) {
+	var r R
+	return r, a.doReq(ctx, req, &r, h, qp...)
 }
 
 // 执行请求
-func (def ApiClient[R]) doReq(req any, res *R, headers map[string]string, qp ...string) (err error) {
+func (def ApiClient[R]) doReq(ctx context.Context, req any, res *R, headers map[string]string, qp ...string) (err error) {
 	// 获取url
 	url := strings.TrimRight(def.Url, "/")
 	url += def.Path
@@ -68,6 +73,9 @@ func (def ApiClient[R]) doReq(req any, res *R, headers map[string]string, qp ...
 	if err != nil {
 		return fmt.Errorf("requester.req new request: %w", err)
 	}
+	if nil != ctx {
+		request = request.WithContext(ctx)
+	}
 	for k, v := range headers {
 		request.Header.Add(k, v)
 	}
@@ -95,7 +103,7 @@ func (def ApiClient[R]) doReq(req any, res *R, headers map[string]string, qp ...
 
 func getClient(conf Conf) (*http.Client, error) {
 	tr := &http.Transport{}
-	c := &http.Client{Transport: tr, Timeout: time.Second * time.Duration(conf.Timeout)}
+	c := &http.Client{Transport: tr}
 
 	if len(conf.CrtPath) > 0 {
 		pool := x509.NewCertPool()
