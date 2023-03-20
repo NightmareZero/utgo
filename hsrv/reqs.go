@@ -72,7 +72,7 @@ func (r *Response) Sse(fun func(hf http.Flusher, r *Response)) (err error) {
 	r.Header().Set("Access-Control-Allow-Origin", "*")
 
 	// fun 方法说明:
-	// 返回数据包含id、event(非必须)、data，结尾必须使用\n\n
+	// 返回数据包含id、event(非必须,如果包含本项，则必须使用eventlistener接收，否则为onMessage)、data，结尾必须使用\n\n
 	// fmt.Fprintf(rw, "id: %d\nevent: ping \ndata: %d\n\n", time.Now().Unix(), time.Now().Unix())
 	// flusher.Flush()
 	fun(flusher, r)
