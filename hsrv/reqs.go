@@ -53,6 +53,28 @@ func (r *Response) Text(txt string, statusCode int) (err error) {
 	return
 }
 
+func (r *Response) Html(html string, statusCode int) (err error) {
+	r.Header().Add("Content-Type", "text/html; charset=utf-8")
+	r.doResponse(statusCode, util.String2Bytes(html))
+	return
+}
+
+func (r *Response) Sse(fun func(hf http.Flusher, r *Response)) (err error) {
+	flusher, ok := r.ResponseWriter.(http.Flusher)
+	if !ok {
+		http.Error(r, "Streaming unsupported!", http.StatusInternalServerError)
+		return
+	}
+
+	r.Header().Add("Content-Type", "text/event-stream; charset=utf-8")
+	r.Header().Set("Cache-Control", "no-cache")
+	r.Header().Set("Connection", "keep-alive")
+	r.Header().Set("Access-Control-Allow-Origin", "*")
+
+	fun(flusher, r)
+	return
+}
+
 func (r *Response) Json(target any, statusCode int) error {
 	b, err := json.Marshal(target)
 	if err != nil {
