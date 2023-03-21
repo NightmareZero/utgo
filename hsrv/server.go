@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rs/cors"
@@ -22,6 +23,7 @@ const WebContextVName CtxTag = "WebContext"
 
 type Server struct {
 	serveMux *http.ServeMux
+	rl       *sync.Mutex // 运行锁
 
 	Ctx             context.Context         // 全局上下文
 	cancel          context.CancelFunc      // 终止函数
@@ -53,6 +55,7 @@ type TlsConfig struct {
 func NewServer(config Config) *Server {
 	var serv = &Server{
 		Config:          config,
+		rl:              &sync.Mutex{},
 		Logger:          defaultLogger,
 		handleMap:       map[string]urlHandler{},
 		ErrorHandler:    defaultPanicHandler,
@@ -65,6 +68,9 @@ func NewServer(config Config) *Server {
 // function around handler
 // prefix: url prefix for interceptor
 func (s *Server) Interceptor(prefix string, interceptor Interceptor) {
+	s.rl.Lock()
+	defer s.rl.Unlock()
+
 	s.middleware = append(s.middleware, _middleware{
 		prefix: prefix,
 		before: interceptor,
@@ -75,6 +81,9 @@ func (s *Server) Interceptor(prefix string, interceptor Interceptor) {
 }
 
 func (s *Server) PostProcessor(prefix string, postProcessor PostProcessor) {
+	s.rl.Lock()
+	defer s.rl.Unlock()
+
 	s.middleware = append(s.middleware, _middleware{
 		prefix: prefix,
 		after:  postProcessor,
@@ -94,6 +103,9 @@ func (s *Server) PostProcessor(prefix string, postProcessor PostProcessor) {
 // method: 监听的服务器方法
 // handler: 执行方法的句柄
 func (s *Server) Handle(path string, method string, handler RequestHandler) {
+	s.rl.Lock()
+	defer s.rl.Unlock()
+
 	h := s.handleMap[path]
 	if h.router == nil {
 		h = urlHandler{
@@ -114,6 +126,8 @@ func (s *Server) Static(path, static string) {
 
 func (s *Server) ListenAndServe() error {
 	s.Logger.Info("hSrv: server starting...")
+	s.rl.Lock()
+	defer s.rl.Unlock()
 
 	s.serveMux = http.NewServeMux()
 	s.buildRouter()
