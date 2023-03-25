@@ -7,17 +7,30 @@ import (
 
 func NewLogger(config LogConfig) *zap.Logger {
 	// init logger encoderConfig
-	var eConfig zap.Config
+	var eConfig zapcore.Encoder
 	if config.Dev {
-		eConfig = zap.NewDevelopmentConfig()
+		eConfig = getDevEncoder()
 	} else {
-		eConfig = zap.NewProductionConfig()
+		eConfig = getEncoder()
 	}
-	eConfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 
 	cores := getZapCores(config, eConfig)
 
 	return zap.New(zapcore.NewTee(cores...))
+}
+
+func getEncoder() zapcore.Encoder {
+	encoderConfig := zap.NewProductionEncoderConfig()
+	encoderConfig.EncodeTime = zapcore.RFC3339TimeEncoder
+	encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+	return zapcore.NewConsoleEncoder(encoderConfig)
+}
+
+func getDevEncoder() zapcore.Encoder {
+	encoderConfig := zap.NewDevelopmentEncoderConfig()
+	encoderConfig.EncodeTime = zapcore.RFC3339TimeEncoder
+	encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+	return zapcore.NewConsoleEncoder(encoderConfig)
 }
 
 func InitWithConfig(config LogConfig) {
