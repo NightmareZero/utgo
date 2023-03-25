@@ -18,11 +18,14 @@ func Test_Info(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			log.InitLog(tt.level)
-			log.Debug("test")
-			log.Info("test")
-			log.Warn("test")
-			log.Error("test")
+			err := log.InitLog(tt.level)
+			if err != nil {
+				t.Error(err)
+			}
+			log.Debugf("test")
+			log.Infof("test")
+			log.Warnf("test")
+			log.Errorf("test")
 		})
 	}
 }

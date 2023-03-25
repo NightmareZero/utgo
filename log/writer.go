@@ -58,10 +58,10 @@ func getZapCores(config LogConfig, encoder zapcore.Encoder) (ret []zapcore.Core)
 	// 初始化 log 文件输出
 	logWriter := zapcore.AddSync(getFileWriter(config.Sync, fixedPath, "log"))
 	ret = append(ret, zapcore.NewCore(
-		encoder, logWriter, LogNormalLevel{config.level, config.MergeErrorLog}))
+		encoder, logWriter, LogNormalLevel{config.level, config.MergeError}))
 
 	// 如果未开启日志合并
-	if !config.MergeErrorLog {
+	if !config.MergeError {
 		fixedErrPath := uos.FixPathEndSlash(util.If(len(config.ErrPath) > 0, config.ErrPath, "./log/"))
 		errorLogWriter := zapcore.AddSync(getFileWriter(config.Sync, fixedErrPath, "err"))
 		ret = append(ret, zapcore.NewCore(
