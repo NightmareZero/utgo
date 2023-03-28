@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 )
 
 // 常规请求定义
@@ -19,6 +20,8 @@ type ApiClient[R any] struct {
 	Processor ApiProcessor
 	Path      string
 	Conf      Conf
+	cl_inited sync.Once
+	client    *http.Client
 }
 
 type Conf struct {
@@ -54,7 +57,10 @@ func (def ApiClient[R]) doReq(ctx context.Context, req any, res *R, headers map[
 		url += "?" + strings.Join(qp, ";")
 	}
 
-	c, err := getClient(def.Conf)
+	def.cl_inited.Do(func() {
+		// 获取client
+		def.client, err = getClient(def.Conf)
+	})
 	if err != nil {
 		return fmt.Errorf("requester.req getClient: %w", err)
 	}
@@ -81,7 +87,7 @@ func (def ApiClient[R]) doReq(ctx context.Context, req any, res *R, headers map[
 	}
 
 	//处理返回结果
-	response, err := c.Do(request)
+	response, err := def.client.Do(request)
 	if err != nil {
 		return fmt.Errorf("requester.req new request: %+v", err)
 	}
