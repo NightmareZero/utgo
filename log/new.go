@@ -35,7 +35,6 @@ func setDefaultConfig(config *LogConfig) error {
 	if config.CallerSkip == 0 {
 		config.CallerSkip = 1
 	}
-
 	return nil
 }
 
@@ -58,7 +57,8 @@ func InitWithConfig(config LogConfig) error {
 	if err != nil {
 		return err
 	}
-	Current = _log{l}
+	Current = zlog{l}
+	Normal = nlog{Current}
 	return nil
 }
 

@@ -2,134 +2,130 @@ package log
 
 import "go.uber.org/zap"
 
-var (
-	Current _log
-)
-
-type _log struct {
-	zlog *zap.Logger
+type zlog struct {
+	log *zap.Logger
 }
 
 // filed可以用zap.Int()等创建
-func (l _log) Debug(msg string, fields ...zap.Field) {
-	l.zlog.Debug(msg, fields...)
+func (l zlog) Debug(msg string, fields ...zap.Field) {
+	l.log.Debug(msg, fields...)
 }
 
 // info
 // 比上面的方法慢一倍，热点代码不建议用
-func (l _log) Debugf(msg string, value ...any) {
-	l.zlog.Sugar().Debugf(msg, value...)
+func (l zlog) Debugf(msg string, value ...any) {
+	l.log.Sugar().Debugf(msg, value...)
 }
 
 // filed可以用zap.Int()等创建
-func (l _log) Info(msg string, fields ...zap.Field) {
-	l.zlog.Info(msg, fields...)
+func (l zlog) Info(msg string, fields ...zap.Field) {
+	l.log.Info(msg, fields...)
 }
 
 // 比上面的方法慢一倍，热点代码不建议用
-func (l _log) Infof(msg string, value ...any) {
-	l.zlog.Sugar().Infof(msg, value...)
+func (l zlog) Infof(msg string, value ...any) {
+	l.log.Sugar().Infof(msg, value...)
 }
 
 // warn
 // filed可以用zap.Int()等创建
-func (l _log) Warn(msg string, fields ...zap.Field) {
-	l.zlog.Warn(msg, fields...)
+func (l zlog) Warn(msg string, fields ...zap.Field) {
+	l.log.Warn(msg, fields...)
 }
 
 // 比上面的方法慢一倍，热点代码不建议用
-func (l _log) Warnf(msg string, fields ...any) {
-	l.zlog.Sugar().Warnf(msg, fields...)
+func (l zlog) Warnf(msg string, fields ...any) {
+	l.log.Sugar().Warnf(msg, fields...)
 }
 
 // error
 // filed可以用zap.Int()等创建
-func (l _log) Error(msg string, fields ...zap.Field) {
-	l.zlog.Error(msg, fields...)
+func (l zlog) Error(msg string, fields ...zap.Field) {
+	l.log.Error(msg, fields...)
 }
 
 // 比上面的方法慢一倍，热点代码不建议用
-func (l _log) Errorf(msg string, fields ...any) {
-	l.zlog.Sugar().Errorf(msg, fields...)
+func (l zlog) Errorf(msg string, fields ...any) {
+	l.log.Sugar().Errorf(msg, fields...)
 }
 
 // 如果是开发模式，则抛出异常
-func (l _log) DevPanic(msg string, fields ...zap.Field) {
-	l.zlog.DPanic(msg, fields...)
+func (l zlog) DevPanic(msg string, fields ...zap.Field) {
+	l.log.DPanic(msg, fields...)
 }
-func (l _log) DevPanicf(msg string, fields ...any) {
-	l.zlog.Sugar().DPanicf(msg, fields...)
-}
-
-func (l _log) Panic(msg string, fields ...zap.Field) {
-	l.zlog.Panic(msg, fields...)
-}
-func (l _log) Panicf(msg string, fields ...any) {
-	l.zlog.Sugar().Panicf(msg, fields...)
+func (l zlog) DevPanicf(msg string, fields ...any) {
+	l.log.Sugar().DPanicf(msg, fields...)
 }
 
-func (l _log) Sync() error {
-	return l.zlog.Sync()
+func (l zlog) Panic(msg string, fields ...zap.Field) {
+	l.log.Panic(msg, fields...)
+}
+func (l zlog) Panicf(msg string, fields ...any) {
+	l.log.Sugar().Panicf(msg, fields...)
+}
+
+func (l zlog) Sync() error {
+	return l.log.Sync()
 }
 
 // filed可以用zap.Int()等创建
 func Debug(msg string, fields ...zap.Field) {
-	Current.zlog.Debug(msg, fields...)
+	Current.log.Debug(msg, fields...)
 }
 
 // info
 // 比上面的方法慢一倍，热点代码不建议用
 func Debugf(msg string, value ...any) {
-	Current.zlog.Sugar().Debugf(msg, value...)
+	Current.log.Sugar().Debugf(msg, value...)
 }
 
 // filed可以用zap.Int()等创建
 func Info(msg string, fields ...zap.Field) {
-	Current.zlog.Info(msg, fields...)
+	Current.log.Info(msg, fields...)
 }
 
 // 比上面的方法慢一倍，热点代码不建议用
 func Infof(msg string, value ...any) {
-	Current.zlog.Sugar().Infof(msg, value...)
+	Current.log.Sugar().Infof(msg, value...)
 }
 
 // warn
 // filed可以用zap.Int()等创建
 func Warn(msg string, fields ...zap.Field) {
-	Current.zlog.Warn(msg, fields...)
+	Current.log.Warn(msg, fields...)
 }
 
 // 比上面的方法慢一倍，热点代码不建议用
 func Warnf(msg string, fields ...any) {
-	Current.zlog.Sugar().Warnf(msg, fields...)
+	Current.log.Sugar().Warnf(msg, fields...)
 }
 
 // error
 // filed可以用zap.Int()等创建
 func Error(msg string, fields ...zap.Field) {
-	Current.zlog.Error(msg, fields...)
+	Current.log.Error(msg, fields...)
 }
 
 // 比上面的方法慢一倍，热点代码不建议用
 func Errorf(msg string, fields ...any) {
-	Current.zlog.Sugar().Errorf(msg, fields...)
+	Current.log.Sugar().Errorf(msg, fields...)
 }
 
 // 如果是开发模式，则抛出异常
 func DevPanic(msg string, fields ...zap.Field) {
-	Current.zlog.DPanic(msg, fields...)
+	Current.log.DPanic(msg, fields...)
 }
 func DevPanicf(msg string, fields ...any) {
-	Current.zlog.Sugar().DPanicf(msg, fields...)
+	Current.log.Sugar().DPanicf(msg, fields...)
 }
 
 func Panic(msg string, fields ...zap.Field) {
-	Current.zlog.Panic(msg, fields...)
+	Current.log.Panic(msg, fields...)
 }
 func Panicf(msg string, fields ...any) {
-	Current.zlog.Sugar().Panicf(msg, fields...)
+	Current.log.Sugar().Panicf(msg, fields...)
 }
 
 func Sync() error {
-	return Current.zlog.Sync()
+	return Current.log.Sync()
 }
