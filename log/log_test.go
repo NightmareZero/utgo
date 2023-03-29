@@ -23,9 +23,13 @@ func Test_Info(t *testing.T) {
 				t.Error(err)
 			}
 			log.Debugf("test")
+			log.Current.Debugf("test")
 			log.Infof("test")
+			log.Current.Infof("test")
 			log.Warnf("test")
+			log.Current.Warnf("test")
 			log.Errorf("test")
+			log.Current.Errorf("test")
 		})
 	}
 }
