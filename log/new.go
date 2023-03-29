@@ -58,7 +58,7 @@ func InitWithConfig(config LogConfig) error {
 	if err != nil {
 		return err
 	}
-	defaultLogger = l
+	Default = l
 	return nil
 }
 
