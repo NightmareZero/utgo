@@ -129,6 +129,26 @@ func getContentTypeByFilename(name string) (ct string, down bool) {
 		return "image/x-icon", false
 	case ".tif":
 		return "image/tiff", false
+	case ".gif":
+		return "image/gif", false
+	case ".bmp":
+		return "image/bmp", false
+	case ".webp":
+		return "image/webp", false
+	case ".mp4":
+		return "video/mp4", false
+	case ".avi":
+		return "video/x-msvideo", false
+	case ".mov":
+		return "video/quicktime", false
+	case ".mp3":
+		return "audio/mpeg", false
+	case ".wav":
+		return "audio/wav", false
+	case ".ogg":
+		return "audio/ogg", false
+	case ".pdf":
+		return "application/pdf", false
 	}
 
 	return "application/octet-stream", true
