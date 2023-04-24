@@ -64,9 +64,10 @@ func InitWithConfig(config LogConfig) error {
 
 func InitLog(level string) error {
 	return InitWithConfig(LogConfig{
-		Sync:   true,
-		Level:  level,
-		Caller: true,
+		Sync:    true,
+		Level:   level,
+		Caller:  true,
+		Console: true,
 	})
 }
 
