@@ -10,11 +10,6 @@ var (
 	FileSystem IFileSystem = &_localFileSystem{
 		basePath: "/files/",
 	}
-
-	// 临时文件默认使用本地文件系统
-	TmpFileSystem IFileSystem = &_localFileSystem{
-		basePath: "/tmp/",
-	}
 )
 
 type IFileSystem interface {

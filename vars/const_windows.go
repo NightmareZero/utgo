@@ -1,4 +1,4 @@
-package uos
+package vars
 
 const (
 	PATH_DELIMITER = win_path_delimiter

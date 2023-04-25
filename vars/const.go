@@ -1,4 +1,4 @@
-package uos
+package vars
 
 const (
 	unix_path_delimiter = "/"

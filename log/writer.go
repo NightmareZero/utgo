@@ -3,10 +3,11 @@ package log
 import (
 	"io"
 	"os"
+	"strings"
 	"time"
 
-	"github.com/NightmareZero/nzgoutil/uos"
 	"github.com/NightmareZero/nzgoutil/util"
+	"github.com/NightmareZero/nzgoutil/vars"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -30,7 +31,7 @@ func getWriterSync(logPath string, name string) io.Writer {
 	// 生成rotatelogs的Logger 实际生成的文件名 demo.log.YYmmddHH
 	// 保存30天内的日志，每天分割一次日志
 	hook, err := rotatelogs.New(
-		uos.FixPathEndSlash(logPath)+name+"-%Y%m%d.log",
+		strings.TrimRight(logPath, vars.PATH_DELIMITER)+vars.PATH_DELIMITER+name+"-%Y%m%d.log",
 		rotatelogs.WithMaxAge(30*time.Hour*24),      // 保留30天
 		rotatelogs.WithRotationTime(1*time.Hour*24), // 每天一次
 		rotatelogs.WithRotationSize(3*1024*1024),    // 最长为3m
@@ -53,7 +54,7 @@ func getWriterAsync(logPath string, name string) io.Writer {
 }
 
 func getZapCores(config LogConfig, encoder zapcore.Encoder) (ret []zapcore.Core) {
-	fixedPath := uos.FixPathEndSlash(util.If(len(config.Path) > 0, config.Path, "./log/"))
+	fixedPath := strings.TrimRight(util.If(len(config.Path) > 0, config.Path, "./log/"), vars.PATH_DELIMITER) + vars.PATH_DELIMITER
 
 	// 初始化 log 文件输出
 	logWriter := zapcore.AddSync(getFileWriter(config.Sync, fixedPath, "log"))
@@ -62,7 +63,7 @@ func getZapCores(config LogConfig, encoder zapcore.Encoder) (ret []zapcore.Core)
 
 	// 如果未开启日志合并
 	if !config.MergeError {
-		fixedErrPath := uos.FixPathEndSlash(util.If(len(config.ErrPath) > 0, config.ErrPath, "./log/"))
+		fixedErrPath := strings.TrimRight(util.If(len(config.ErrPath) > 0, config.ErrPath, "./log/"), vars.PATH_DELIMITER) + vars.PATH_DELIMITER
 		errorLogWriter := zapcore.AddSync(getFileWriter(config.Sync, fixedErrPath, "err"))
 		ret = append(ret, zapcore.NewCore(
 			encoder, errorLogWriter, zap.ErrorLevel))

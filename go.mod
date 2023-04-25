@@ -10,7 +10,7 @@ require (
 	github.com/rs/cors v1.8.2
 	github.com/xuri/excelize/v2 v2.6.1
 	go.uber.org/zap v1.21.0
-	golang.org/x/image v0.0.0-20220413100746-70e8d0d3baa9
+	golang.org/x/image v0.5.0
 	gopkg.in/yaml.v3 v3.0.0
 )
 
