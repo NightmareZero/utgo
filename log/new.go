@@ -64,10 +64,11 @@ func InitWithConfig(config LogConfig) error {
 
 func InitLog(level string) error {
 	return InitWithConfig(LogConfig{
-		Sync:    true,
-		Level:   level,
-		Caller:  true,
-		Console: true,
+		Sync:      true,
+		Level:     level,
+		Caller:    true,
+		Console:   true,
+		NotToFile: false,
 	})
 }
 
@@ -86,6 +87,7 @@ type LogConfig struct {
 	MergeError bool   `json:"mergeErr" yaml:"mergeErr"`     // 合并错误日志到常规日志
 	ErrPath    string `json:"errPath" yaml:"errPath"`       // 错误日志输出路径
 	Console    bool   `json:"console" yaml:"console"`       // 输出到控制台
+	NotToFile  bool   `json:"file" yaml:"file"`             // 输出到文件
 	Level      string `json:"level" yaml:"level"`           // 日志级别
 	Dev        bool   `json:"dev" yaml:"dev"`               // 开发模式
 	Caller     bool   `json:"caller" yaml:"caller"`         // 输出调用者信息

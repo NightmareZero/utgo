@@ -56,17 +56,19 @@ func getWriterAsync(logPath string, name string) io.Writer {
 func getZapCores(config LogConfig, encoder zapcore.Encoder) (ret []zapcore.Core) {
 	fixedPath := strings.TrimRight(util.If(len(config.Path) > 0, config.Path, "./log/"), vars.PATH_DELIMITER) + vars.PATH_DELIMITER
 
-	// 初始化 log 文件输出
-	logWriter := zapcore.AddSync(getFileWriter(config.Sync, fixedPath, "log"))
-	ret = append(ret, zapcore.NewCore(
-		encoder, logWriter, LogNormalLevel{config.level, config.MergeError}))
-
-	// 如果未开启日志合并
-	if !config.MergeError {
-		fixedErrPath := strings.TrimRight(util.If(len(config.ErrPath) > 0, config.ErrPath, "./log/"), vars.PATH_DELIMITER) + vars.PATH_DELIMITER
-		errorLogWriter := zapcore.AddSync(getFileWriter(config.Sync, fixedErrPath, "err"))
+	if !config.NotToFile {
+		// 初始化 log 文件输出
+		logWriter := zapcore.AddSync(getFileWriter(config.Sync, fixedPath, "log"))
 		ret = append(ret, zapcore.NewCore(
-			encoder, errorLogWriter, zap.ErrorLevel))
+			encoder, logWriter, LogNormalLevel{config.level, config.MergeError}))
+
+		// 如果未开启日志合并
+		if !config.MergeError {
+			fixedErrPath := strings.TrimRight(util.If(len(config.ErrPath) > 0, config.ErrPath, "./log/"), vars.PATH_DELIMITER) + vars.PATH_DELIMITER
+			errorLogWriter := zapcore.AddSync(getFileWriter(config.Sync, fixedErrPath, "err"))
+			ret = append(ret, zapcore.NewCore(
+				encoder, errorLogWriter, zap.ErrorLevel))
+		}
 	}
 
 	// 如果开启屏幕输出

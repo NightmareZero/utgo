@@ -1,5 +1,11 @@
 package log
 
 func init() {
-	InitLog("info")
+	InitWithConfig(LogConfig{
+		Sync:      true,
+		Level:     "debug",
+		Caller:    true,
+		Console:   true,
+		NotToFile: true,
+	})
 }
