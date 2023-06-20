@@ -18,7 +18,7 @@ func NewJwtGenrator[T any](key []byte, container T) (jg *JwtGenerator[T], err er
 	jg.alg = jwt.NewHS256(key)
 
 	if jg.ExpMinute == 0 {
-		jg.ExpMinute = 180
+		jg.ExpMinute = 30
 	}
 
 	return
@@ -30,14 +30,23 @@ type JwtGenerator[T any] struct {
 	ExpMinute int
 }
 
-func (g *JwtGenerator[T]) Sign(u T) (token []byte, err error) {
+type SignOption struct {
+	ExpMinute int // 如果不设置，将使用JwtGenerator的ExpMinute
+}
+
+func (g *JwtGenerator[T]) Sign(u T, opt SignOption) (token []byte, err error) {
+	exp := g.ExpMinute
+	if opt.ExpMinute > 0 {
+		exp = opt.ExpMinute
+	}
+
 	now := time.Now()
 	pl := JwtToken[T]{
 		Payload: jwt.Payload{
 			Issuer:         "nz",
 			Subject:        "token",
 			Audience:       jwt.Audience{},
-			ExpirationTime: jwt.NumericDate(now.Add(time.Duration(g.ExpMinute) * time.Minute)),
+			ExpirationTime: jwt.NumericDate(now.Add(time.Duration(exp) * time.Minute)),
 			NotBefore:      jwt.NumericDate(now.Add(30 * time.Minute)),
 			IssuedAt:       jwt.NumericDate(now),
 			JWTID:          idg.UuidV1().Str22(),
