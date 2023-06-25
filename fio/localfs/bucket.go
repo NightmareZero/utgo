@@ -1,4 +1,4 @@
-package fio
+package localfs
 
 import (
 	"fmt"
@@ -7,16 +7,53 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
+
+	"github.com/NightmareZero/nzgoutil/fio"
 )
 
+var _ fio.IFileBucket = &LocalFileBucket{}
+
 // 本地文件系统(需要被 minio相关实现覆盖)
-type _localFileSystem struct {
+type LocalFileBucket struct {
+	bucket   string
 	basePath string
 }
 
+// SetConfig implements fio.IFileBucket.
+func (*LocalFileBucket) SetConfig(conf fio.BucketConfig) (err error) {
+	// TODO
+	return
+}
+
+// Info implements fio.IFileBucket.
+func (*LocalFileBucket) Info() (stat fio.BucketStat, err error) {
+	// TODO
+	return
+}
+
+// List implements fio.IFileBucket.
+func (*LocalFileBucket) List(path string) ([]fs.FileInfo, error) {
+	de, err := os.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+	var res []fs.FileInfo
+	for _, v := range de {
+		fi, _ := v.Info()
+		res = append(res, fi)
+	}
+	return res, nil
+}
+
+func (l *LocalFileBucket) Init() error {
+	return assertDirExist(l.basePath)
+}
+
 // OpenFile implements IFileSystem
-func (l *_localFileSystem) OpenFile(name string) (IFile, error) {
+func (l *LocalFileBucket) OpenFile(name string) (fio.IFile, error) {
+	// 处理恶意行为
+	name = strings.ReplaceAll(name, "..", "")
+
 	// 拼接并防止路径出现问题
 	absFileName := strings.TrimRight(l.basePath, "/") + string(filepath.Separator) + strings.TrimLeft(name, "/")
 
@@ -34,18 +71,18 @@ func (l *_localFileSystem) OpenFile(name string) (IFile, error) {
 }
 
 // OpenReadOnly implements IFileSystem
-func (l *_localFileSystem) Open(name string) (io.ReadCloser, error) {
+func (l *LocalFileBucket) Open(name string) (io.ReadCloser, error) {
 	absFileName := strings.TrimRight(l.basePath, "/") + string(filepath.Separator) + strings.TrimLeft(name, "/")
 	return os.Open(absFileName)
 }
 
 // Stat implements IFileSystem
-func (l *_localFileSystem) Stat(name string) (fs.FileInfo, error) {
+func (l *LocalFileBucket) Stat(name string) (fs.FileInfo, error) {
 	absFileName := strings.TrimRight(l.basePath, "/") + string(filepath.Separator) + strings.TrimLeft(name, "/")
 	return os.Stat(absFileName)
 }
 
-func (l *_localFileSystem) Remove(name string) error {
+func (l *LocalFileBucket) Remove(name string) error {
 	absFileName := strings.TrimRight(l.basePath, "/") + string(filepath.Separator) + strings.TrimLeft(name, "/")
 	return os.Remove(absFileName)
 }
@@ -54,9 +91,10 @@ func assertDirExist(dirpath string) error {
 	dir_fi, err := os.Stat(dirpath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			mask := syscall.Umask(0)  // 改为 0000 八进制
-			defer syscall.Umask(mask) // 改为原来的 umask
-			err = os.MkdirAll(dirpath, 0777)
+			var err error
+			fio.TmpFileMask(func() {
+				err = os.MkdirAll(dirpath, 0777)
+			})
 			if err != nil {
 				return err
 			}

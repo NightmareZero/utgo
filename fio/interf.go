@@ -5,14 +5,18 @@ import (
 	"os"
 )
 
-var (
-	// 默认使用本地文件系统(以后需要被 minio相关实现覆盖)
-	FileSystem IFileSystem = &_localFileSystem{
-		basePath: "/files/",
-	}
-)
+var FileSystem IFileSystem
 
+// 默认使用本地文件系统(以后需要被 minio相关实现覆盖)
 type IFileSystem interface {
+	IsOnline() bool
+	Bucket(name string) (IFileBucket, error)
+}
+
+type IFileBucket interface {
+	Info() (stat BucketStat, err error)
+	SetConfig(conf BucketConfig) (err error)
+	List(path string) ([]os.FileInfo, error)
 	Open(name string) (io.ReadCloser, error)
 	OpenFile(name string) (IFile, error)
 	Stat(name string) (os.FileInfo, error)
@@ -23,4 +27,14 @@ type IFile interface {
 	io.Reader
 	io.Writer
 	io.Closer
+}
+
+type BucketStat struct {
+	Quota int64 // 配额 (单位mb)
+	Vers  bool  // 是否开启版本控制
+}
+
+type BucketConfig struct {
+	Quota *int64 // 配额 (单位mb)
+	Vers  *bool  // 是否开启版本控制
 }
