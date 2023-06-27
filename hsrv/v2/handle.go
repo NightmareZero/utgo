@@ -26,7 +26,7 @@ func (u urlHandler) ServeHTTP(response http.ResponseWriter, request *http.Reques
 func (u urlHandler) serveHTTP(r Ctx) {
 	defer requestRecover(u.s, r)
 
-	rh := u.router[r.r.Method]
+	rh := u.router[r.R.Method]
 	if rh == nil {
 		defaultNotFoundHandler(r)
 		return
@@ -74,7 +74,7 @@ func doRecover(i any, s *Server, ctx Ctx) {
 			i2 := recover()
 			if i2 != nil {
 				if s.Logger != nil {
-					s.Logger.Errorf("request error, url: %v,%+v", r.r.URL, i2)
+					s.Logger.Errorf("request error, url: %v,%+v", r.R.URL, i2)
 				}
 			}
 		}()
@@ -95,7 +95,7 @@ func defaultPanicHandler(r Ctx, err error) {
 
 func newStaticFileHandler(s *Server, basepath, staticpath string) RequestHandler {
 	return func(r Ctx) {
-		p := r.r.URL.Path
+		p := r.R.URL.Path
 		truepath := staticpath + strings.Replace(p, basepath, "", 1)
 
 		f, err := os.OpenFile(truepath, os.O_RDWR, 0)
