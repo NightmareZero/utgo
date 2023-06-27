@@ -1,12 +1,29 @@
 package client_test
 
-import "github.com/NightmareZero/nzgoutil/client"
+import (
+	"testing"
+
+	"github.com/NightmareZero/nzgoutil/client"
+)
 
 var (
-	Server1   = "http://localhost:8865"
-	TestLogin = &client.ApiClient[any]{
-		Url:       Server1,
-		Path:      "/login",
-		Processor: client.PostJson,
+	Server1   = ""
+	Client1   = client.Client{Url: Server1}
+	TestLogin = client.Api[map[string]any]{
+		Client: &Client1,
+		Path:   "/auth/login",
+		Method: "POST",
+		Parser: client.JsonParser,
 	}
 )
+
+func TestSend(t *testing.T) {
+	Client1.Init()
+
+	a, err := TestLogin.Req(map[string]string{"username": "admin", "password": "123"}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("%+v", a)
+
+}
