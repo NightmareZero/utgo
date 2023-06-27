@@ -67,8 +67,8 @@ func (def *Api[R]) doReq(ctx context.Context, req any, res *R, headers map[strin
 
 	// 获取请求body
 	b := []byte{}
-	if req != nil && def.Parser.r != nil {
-		b, err = def.Parser.r(req)
+	if req != nil && def.Parser.R != nil {
+		b, err = def.Parser.R(req)
 		if err != nil {
 			return fmt.Errorf("requester.req get request body bytes: %w", err)
 		}
@@ -98,7 +98,7 @@ func (def *Api[R]) doReq(ctx context.Context, req any, res *R, headers map[strin
 		return fmt.Errorf("requester.req read body error: %+v", err)
 	}
 
-	err = def.Parser.w(b, res)
+	err = def.Parser.W(b, res)
 	if err != nil {
 		return fmt.Errorf("requester.req convert body %v, error: %+v", string(b), err)
 	}
@@ -159,38 +159,48 @@ func (cl *Client) Default() {
 }
 
 type DataParser struct {
-	r func(req any) ([]byte, error) // RequestReader
-	w func(b []byte, res any) error // ResponseWriter
+	R func(req any) ([]byte, error) // RequestReader
+	W func(b []byte, res any) error // ResponseWriter
 }
 
 var (
-	JsonParser     = DataParser{r: jsonr, w: jsonw}
-	TextParser     = DataParser{r: txtr, w: txtw}
+	NoParser       = DataParser{R: ByteReader, W: ByteWriter}
+	JsonParser     = DataParser{R: JsonReader, W: JsonWriter}
+	TextParser     = DataParser{R: TextReader, W: TextWriter}
 	FormParser     = DataParser{} // 暂时不实现
 	GetFileParser  = DataParser{} // 暂时不实现
 	SendFileParser = DataParser{} // 暂时不实现
 )
 
-func jsonr(req any) ([]byte, error) {
+func JsonReader(req any) ([]byte, error) {
 	return json.Marshal(req)
 }
 
-func jsonw(b []byte, res any) error {
+func JsonWriter(b []byte, res any) error {
 	return json.Unmarshal(b, res)
 }
 
-func txtr(req any) ([]byte, error) {
+func TextReader(req any) ([]byte, error) {
 	if b, ok := req.([]byte); ok {
 		return b, nil
 	}
 	return nil, fmt.Errorf("invalid input type, need []byte")
 }
 
-func txtw(b []byte, res any) error {
+func TextWriter(b []byte, res any) error {
 	if rb, ok := res.([]byte); ok {
 		rb = append(rb, b...)
 		res = rb
 		return nil
 	}
 	return fmt.Errorf("invalid putput type, need []byte")
+}
+
+func ByteReader(req any) ([]byte, error) {
+	return req.([]byte), nil
+}
+
+func ByteWriter(b []byte, res any) error {
+	res = b
+	return nil
 }
