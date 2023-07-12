@@ -55,7 +55,7 @@ func (l *LocalFileBucket) OpenFile(name string) (fio.IFile, error) {
 	name = strings.ReplaceAll(name, "..", "")
 
 	// 拼接并防止路径出现问题
-	absFileName := strings.TrimRight(l.basePath, "/") + string(filepath.Separator) + strings.TrimLeft(name, "/")
+	absFileName := strings.TrimRight(l.basePath, "/") + string(filepath.Separator) + strings.TrimPrefix(name, "/")
 
 	// 读取目标路径
 	dir := filepath.Dir(absFileName)
@@ -72,18 +72,18 @@ func (l *LocalFileBucket) OpenFile(name string) (fio.IFile, error) {
 
 // OpenReadOnly implements IFileSystem
 func (l *LocalFileBucket) Open(name string) (io.ReadCloser, error) {
-	absFileName := strings.TrimRight(l.basePath, "/") + string(filepath.Separator) + strings.TrimLeft(name, "/")
+	absFileName := strings.TrimRight(l.basePath, "/") + string(filepath.Separator) + strings.TrimPrefix(name, "/")
 	return os.Open(absFileName)
 }
 
 // Stat implements IFileSystem
 func (l *LocalFileBucket) Stat(name string) (fs.FileInfo, error) {
-	absFileName := strings.TrimRight(l.basePath, "/") + string(filepath.Separator) + strings.TrimLeft(name, "/")
+	absFileName := strings.TrimRight(l.basePath, "/") + string(filepath.Separator) + strings.TrimPrefix(name, "/")
 	return os.Stat(absFileName)
 }
 
 func (l *LocalFileBucket) Remove(name string) error {
-	absFileName := strings.TrimRight(l.basePath, "/") + string(filepath.Separator) + strings.TrimLeft(name, "/")
+	absFileName := strings.TrimRight(l.basePath, "/") + string(filepath.Separator) + strings.TrimPrefix(name, "/")
 	return os.Remove(absFileName)
 }
 
