@@ -1,6 +1,8 @@
 package util
 
 import (
+	"bytes"
+	"encoding/gob"
 	"encoding/json"
 	"reflect"
 	"time"
@@ -51,4 +53,18 @@ func JsonConv(src any, dst any) error {
 		return err
 	}
 	return json.Unmarshal(b, dst)
+}
+
+func GobConv(src any, dst any) error {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	if err := enc.Encode(src); err != nil {
+		return err
+	}
+
+	dec := gob.NewDecoder(&buf)
+	if err := dec.Decode(dst); err != nil {
+		return err
+	}
+	return nil
 }
