@@ -22,22 +22,22 @@ type nlog struct {
 
 // filed可以用zap.Int()等创建
 func (l nlog) Debug(fields ...any) {
-	l.log.Sugar().Debug(fields...)
+	l.Log.Sugar().Debug(fields...)
 }
 
 // filed可以用zap.Int()等创建
 func (l nlog) Info(fields ...any) {
-	l.log.Sugar().Info(fields...)
+	l.Log.Sugar().Info(fields...)
 }
 
 // warn
 // filed可以用zap.Int()等创建
 func (l nlog) Warn(fields ...any) {
-	l.log.Sugar().Warn(fields...)
+	l.Log.Sugar().Warn(fields...)
 }
 
 // error
 // filed可以用zap.Int()等创建
 func (l nlog) Error(fields ...any) {
-	l.log.Sugar().Error(fields...)
+	l.Log.Sugar().Error(fields...)
 }

@@ -49,12 +49,16 @@ func Test_NoFile(t *testing.T) {
 
 			log.Debugf("test")
 			log.Current.Debugf("test")
+			log.Normal.Debugf("test")
 			log.Infof("test")
 			log.Current.Infof("test")
+			log.Normal.Infof("test")
 			log.Warnf("test")
 			log.Current.Warnf("test")
+			log.Normal.Warnf("test")
 			log.Errorf("test")
 			log.Current.Errorf("test")
+			log.Normal.Errorf("test")
 		})
 	}
 }
