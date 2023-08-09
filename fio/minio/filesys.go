@@ -1,6 +1,7 @@
 package miniofs
 
 import (
+	"strings"
 	"sync"
 
 	"github.com/NightmareZero/nzgoutil/fio"
@@ -47,6 +48,7 @@ func (m *MinIOFileSystem) IsOnline() bool {
 func (m *MinIOFileSystem) Bucket(name string) (fio.IFileBucket, error) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
+	name = strings.ToLower(name)
 
 	if b, ok := m.buckets[name]; ok {
 		// 存在则返回

@@ -19,6 +19,11 @@ type LocalFileBucket struct {
 	basePath string
 }
 
+// Bucket implements fio.IFileBucket.
+func (l *LocalFileBucket) Bucket() string {
+	return l.bucket
+}
+
 // SetConfig implements fio.IFileBucket.
 func (*LocalFileBucket) SetConfig(conf fio.BucketConfig) (err error) {
 	// TODO

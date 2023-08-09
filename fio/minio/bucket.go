@@ -19,6 +19,10 @@ type MinioFileBucket struct {
 	bucket string
 }
 
+func (m *MinioFileBucket) Bucket() string {
+	return m.bucket
+}
+
 func (m *MinioFileBucket) Init() (err error) {
 	ctx, cf := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cf()
@@ -34,6 +38,15 @@ func (m *MinioFileBucket) Init() (err error) {
 		if err != nil {
 			return err
 		}
+		var defaultQuota int64 = 1024
+		err = m.SetConfig(fio.BucketConfig{
+			Quota: &defaultQuota,
+		})
+		if err != nil {
+			m.cl.RemoveBucket(ctx, m.bucket)
+			return err
+		}
+
 	}
 
 	return nil
@@ -45,6 +58,7 @@ func (m *MinioFileBucket) Info() (stat fio.BucketStat, err error) {
 	ctx, cf := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cf()
 
+	// 获取版本控制
 	bvc, err := m.cl.GetBucketVersioning(ctx, m.bucket)
 	if err != nil {
 		err = fmt.Errorf("error on get bucket versioning: %v", err)
@@ -52,12 +66,30 @@ func (m *MinioFileBucket) Info() (stat fio.BucketStat, err error) {
 	}
 	stat.Vers = bvc.Enabled()
 
+	// 获取配额
 	bq, err := m.mc.GetBucketQuota(ctx, m.bucket)
 	if err != nil {
 		err = fmt.Errorf("error on get bucket quota: %v", err)
 		return
 	}
 	stat.Quota = int64(bq.Quota) / 1024 / 1024
+
+	// get bucket size
+	bi, err := m.mc.AccountInfo(ctx, madmin.AccountOpts{
+		PrefixUsage: true,
+	})
+	if err != nil {
+		err = fmt.Errorf("error on get bucket size: %v", err)
+	}
+
+	for i, bai := range bi.Buckets {
+		if bai.Name == m.bucket {
+			stat.Size = bi.Buckets[i].Size / 1024 / 1024
+			stat.Files = bi.Buckets[i].Objects
+			break
+		}
+	}
+
 	return
 }
 

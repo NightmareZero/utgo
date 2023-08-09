@@ -14,6 +14,7 @@ type IFileSystem interface {
 }
 
 type IFileBucket interface {
+	Bucket() string
 	Info() (stat BucketStat, err error)
 	SetConfig(conf BucketConfig) (err error)
 	List(path string) ([]os.FileInfo, error)
@@ -30,8 +31,10 @@ type IFile interface {
 }
 
 type BucketStat struct {
-	Quota int64 // 配额 (单位mb)
-	Vers  bool  // 是否开启版本控制
+	Quota int64  // 配额 (单位mb)
+	Vers  bool   // 是否开启版本控制
+	Size  uint64 // 文件大小 (字节)
+	Files uint64 // 文件数量
 }
 
 type BucketConfig struct {
