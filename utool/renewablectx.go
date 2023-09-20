@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+var _ context.Context = &RenewableContext{}
+
 type RenewableContext struct {
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -24,6 +26,10 @@ func (rc *RenewableContext) Done() <-chan struct{} {
 	return rc.ctx.Done()
 }
 
+func (*RenewableContext) Deadline() (deadline time.Time, ok bool) {
+	return deadline, false
+}
+
 func (rc *RenewableContext) Err() error {
 	return rc.ctx.Err()
 }
@@ -41,7 +47,7 @@ func (rc *RenewableContext) Cancel() {
 	defer rc.timer.Stop()
 }
 
-func WithRenewableTimeout(parent context.Context, timeout time.Duration) (*RenewableContext, context.CancelFunc) {
+func CtxWithRenewableTimeout(parent context.Context, timeout time.Duration) (*RenewableContext, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(parent)
 	rc := newRenewableContext(ctx, timeout)
 	go func() {

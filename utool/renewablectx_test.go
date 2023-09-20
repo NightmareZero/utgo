@@ -10,7 +10,7 @@ import (
 )
 
 func TestRenewableContextTimeout(t *testing.T) {
-	rc, cancel := utool.WithRenewableTimeout(context.Background(), time.Second*5)
+	rc, cancel := utool.CtxWithRenewableTimeout(context.Background(), time.Second*5)
 	defer cancel()
 	fmt.Printf("rc: %+v\n", rc)
 	tc := 0
