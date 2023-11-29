@@ -10,13 +10,13 @@ import (
 // Try 保护方法运行
 func Try(invoke func()) {
 	// 延迟处理的函数
-	defer Recover("panic", nil)
+	defer Recover("", nil)
 	invoke()
 }
 
 // TryCatch 保护方法运行，如果失败，则执行fallback方法
 func TryCatch(invoke func(), fallback func(err error)) {
-	defer Recover("panic", fallback)
+	defer Recover("", fallback)
 	invoke()
 }
 
