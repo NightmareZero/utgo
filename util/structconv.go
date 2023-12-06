@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/vmihailenco/msgpack/v5"
 )
 
 func MapConv(src map[string]any, dst any) error {
@@ -68,12 +67,4 @@ func GobConv(src any, dst any) error {
 		return err
 	}
 	return nil
-}
-
-func MpkConv(src any, dst any) error {
-	b, err := msgpack.Marshal(src)
-	if err != nil {
-		return err
-	}
-	return msgpack.Unmarshal(b, dst)
 }
