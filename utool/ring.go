@@ -14,11 +14,19 @@ func NewSliceRing[T any](capacity int) *SliceRing[T] {
 	}
 }
 
+func (r *SliceRing[T]) Len() int {
+	if r.end >= r.start {
+		return r.end - r.start
+	}
+	return r.capacity - r.start + r.end
+}
+
 func (r *SliceRing[T]) Add(item T) {
 	// buffer is full, double the capacity
 	if r.end == (r.start-1+r.capacity)%r.capacity {
 		// double the capacity
 		newData := make([]T, r.capacity*2)
+		oldLen := r.Len()
 		if r.start < r.end {
 			copy(newData, r.data[r.start:r.end])
 		} else {
@@ -26,7 +34,7 @@ func (r *SliceRing[T]) Add(item T) {
 			copy(newData[r.capacity-r.start:], r.data[:r.end])
 		}
 		r.start = 0
-		r.end = r.capacity
+		r.end = oldLen
 		r.capacity *= 2
 		r.data = newData
 	}
