@@ -8,6 +8,9 @@ type SliceRing[T any] struct {
 }
 
 func NewSliceRing[T any](capacity int) *SliceRing[T] {
+	if capacity == 0 {
+		capacity = 8
+	}
 	return &SliceRing[T]{
 		data:     make([]T, capacity),
 		capacity: capacity,
