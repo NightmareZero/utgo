@@ -24,7 +24,7 @@ func NewZapLogger(config LogConfig) (*zap.Logger, error) {
 
 	c := zapcore.NewTee(getZapCores(config, eConfig)...)
 	if config.Caller {
-		return zap.New(c, zap.AddCaller(), zap.AddCallerSkip(1)), nil
+		return zap.New(c, zap.AddCaller(), zap.AddCallerSkip(config.CallerSkip)), nil
 	}
 
 	return zap.New(c), nil
