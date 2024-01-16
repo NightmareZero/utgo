@@ -5,7 +5,13 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+// Deprecated: use NewZapLogger instead
 func NewLogger(config LogConfig) (*zap.Logger, error) {
+	return NewZapLogger(config)
+}
+
+// new zap logger
+func NewZapLogger(config LogConfig) (*zap.Logger, error) {
 	setDefaultConfig(&config)
 
 	// init logger encoderConfig
@@ -22,6 +28,15 @@ func NewLogger(config LogConfig) (*zap.Logger, error) {
 	}
 
 	return zap.New(c), nil
+}
+
+// new logger
+func NewNormalLogger(config LogConfig) (Logger, error) {
+	logger, err := NewZapLogger(config)
+	if err != nil {
+		return nil, err
+	}
+	return nlog{zlog: zlog{logger}}, nil
 }
 
 func setDefaultConfig(config *LogConfig) error {
