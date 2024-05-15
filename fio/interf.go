@@ -18,7 +18,7 @@ type IFileBucket interface {
 	Info() (stat BucketStat, err error)
 	SetConfig(conf BucketConfig) (err error)
 	List(path string) ([]os.FileInfo, error)
-	Open(name string) (io.ReadCloser, error)
+	Open(name string) (io.ReadSeekCloser, error)
 	OpenFile(name string) (IFile, error)
 	Stat(name string) (os.FileInfo, error)
 	Remove(name string) error

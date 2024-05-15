@@ -76,7 +76,7 @@ func (l *LocalFileBucket) OpenFile(name string) (fio.IFile, error) {
 }
 
 // OpenReadOnly implements IFileSystem
-func (l *LocalFileBucket) Open(name string) (io.ReadCloser, error) {
+func (l *LocalFileBucket) Open(name string) (io.ReadSeekCloser, error) {
 	absFileName := strings.TrimRight(l.basePath, "/") + string(filepath.Separator) + strings.TrimPrefix(name, "/")
 	return os.Open(absFileName)
 }

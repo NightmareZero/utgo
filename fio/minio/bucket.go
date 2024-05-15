@@ -135,7 +135,7 @@ func (m *MinioFileBucket) OpenFile(name string) (fio.IFile, error) {
 
 // OpenReadOnly implements io.IFileSystem
 // 打开文件(只读管道)
-func (m *MinioFileBucket) Open(name string) (io.ReadCloser, error) {
+func (m *MinioFileBucket) Open(name string) (io.ReadSeekCloser, error) {
 	o, err := m.cl.GetObject(context.Background(), m.bucket, name, minio.GetObjectOptions{})
 	if err != nil {
 		return nil, err
