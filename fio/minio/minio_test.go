@@ -8,13 +8,13 @@ import (
 )
 
 func beforeTest() {
-	// conf.LoadConf("../../../../run/config.yaml")
-	// fioinit.Init(conf.Conf.Platform.MinIO)
+	// conf.LoadConf(utila.GetProjectRoot() + "/run/config.yaml")
+	// fioinit.Init(conf.Conf.Data.MinIO)
 }
 
 func TestWrite(t *testing.T) {
 	beforeTest()
-	bucket, err := fio.FileSystem.Bucket("test1")
+	bucket, err := fio.FileSystem.Bucket("test-1")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,5 +69,23 @@ func TestInfo(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Logf("%+v", bs)
+
+}
+
+func TestQuota(t *testing.T) {
+	beforeTest()
+
+	mis, err := fio.FileSystem.Bucket("test1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var qv int64 = 512
+	err = mis.SetConfig(fio.BucketConfig{
+		Quota: &qv,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("set quota ok")
 
 }

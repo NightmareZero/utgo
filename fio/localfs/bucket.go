@@ -82,9 +82,13 @@ func (l *LocalFileBucket) Open(name string) (io.ReadSeekCloser, error) {
 }
 
 // Stat implements IFileSystem
-func (l *LocalFileBucket) Stat(name string) (fs.FileInfo, error) {
+func (l *LocalFileBucket) Stat(name string) (fio.IFileStat, error) {
 	absFileName := strings.TrimRight(l.basePath, "/") + string(filepath.Separator) + strings.TrimPrefix(name, "/")
-	return os.Stat(absFileName)
+	oi, err := os.Stat(absFileName)
+	if err != nil {
+		return nil, err
+	}
+	return &FileStatHandler{absFileName, oi}, nil
 }
 
 func (l *LocalFileBucket) Remove(name string) error {

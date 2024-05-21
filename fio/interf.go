@@ -20,7 +20,7 @@ type IFileBucket interface {
 	List(path string) ([]os.FileInfo, error)
 	Open(name string) (io.ReadSeekCloser, error)
 	OpenFile(name string) (IFile, error)
-	Stat(name string) (os.FileInfo, error)
+	Stat(name string) (IFileStat, error)
 	Remove(name string) error
 }
 
@@ -28,6 +28,11 @@ type IFile interface {
 	io.Reader
 	io.Writer
 	io.Closer
+}
+
+type IFileStat interface {
+	os.FileInfo
+	Sha1() string
 }
 
 type BucketStat struct {

@@ -13,6 +13,8 @@ import (
 	"github.com/minio/minio-go/v7"
 )
 
+var _ fio.IFileBucket = &MinioFileBucket{}
+
 type MinioFileBucket struct {
 	cl     *minio.Client
 	mc     *madmin.AdminClient
@@ -145,7 +147,7 @@ func (m *MinioFileBucket) Open(name string) (io.ReadSeekCloser, error) {
 
 // Stat implements io.IFileSystem
 // 获取文件信息
-func (m *MinioFileBucket) Stat(name string) (fs.FileInfo, error) {
+func (m *MinioFileBucket) Stat(name string) (fio.IFileStat, error) {
 	name = strings.TrimPrefix(name, "/")
 
 	oi, err := m.cl.StatObject(context.Background(), m.bucket, name, minio.StatObjectOptions{})

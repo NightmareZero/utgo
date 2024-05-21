@@ -12,6 +12,11 @@ type FileStatHandler struct {
 	minio.ObjectInfo
 }
 
+// Sha1 implements fio.IFileStat.
+func (f *FileStatHandler) Sha1() string {
+	return f.ObjectInfo.ChecksumSHA1
+}
+
 // IsDir implements fs.FileInfo
 func (f *FileStatHandler) IsDir() bool {
 	return strings.HasSuffix(f.Key, "/")
