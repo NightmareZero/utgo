@@ -36,6 +36,7 @@ func (m *MinioFile) Write(p []byte) (n int, err error) {
 	if m.pr == nil {
 		m.pr, m.pw = io.Pipe()
 		go util.Try(func() {
+			// 由于 objectSize=-1 , 所以PutObject会一直等待pr的数据, 直到pr被关闭
 			_, m.errMinio = m.fs.cl.PutObject(context.Background(), m.fs.bucket, m.name, m.pr, -1, minio.PutObjectOptions{})
 			m.pr.Close()
 		})
