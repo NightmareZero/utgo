@@ -1,6 +1,7 @@
 package localfs
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/fs"
@@ -17,6 +18,49 @@ var _ fio.IFileBucket = &LocalFileBucket{}
 type LocalFileBucket struct {
 	bucket   string
 	basePath string
+}
+
+// MergeFile implements fio.IFileBucket.
+func (l *LocalFileBucket) MergeFile(ctx context.Context, dst fio.MergeOption, src ...fio.MergeOption) (fio.IFileStat, error) {
+	// Open the destination file in write mode
+	dstFile, err := l.OpenFile(dst.Path)
+	if err != nil {
+		return nil, err
+	}
+	defer dstFile.Close()
+
+	// Iterate over the source files
+	for _, s := range src {
+		// Open the source file in read mode
+		srcFile, err := l.Open(s.Path)
+		if err != nil {
+			return nil, err
+		}
+		defer srcFile.Close()
+
+		// Copy the contents of the source file to the destination file
+		_, err = io.Copy(dstFile, srcFile)
+		if err != nil {
+			return nil, err
+		}
+
+	}
+
+	for _, s := range src {
+		// Remove the source file
+		err = l.Remove(s.Path)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Get the file stat of the destination file
+	stat, err := l.Stat(dst.Path)
+	if err != nil {
+		return nil, err
+	}
+
+	return stat, nil
 }
 
 // Bucket implements fio.IFileBucket.

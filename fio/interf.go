@@ -1,6 +1,7 @@
 package fio
 
 import (
+	"context"
 	"io"
 	"os"
 )
@@ -20,6 +21,7 @@ type IFileBucket interface {
 	List(path string) ([]os.FileInfo, error)
 	Open(name string) (io.ReadSeekCloser, error)
 	OpenFile(name string) (IFile, error)
+	MergeFile(ctx context.Context, dst MergeOption, src ...MergeOption) (IFileStat, error)
 	Stat(name string) (IFileStat, error)
 	Remove(name string) error
 }
@@ -45,4 +47,8 @@ type BucketStat struct {
 type BucketConfig struct {
 	Quota *int64 // 配额 (单位mb)
 	Vers  *bool  // 是否开启版本控制
+}
+
+type MergeOption struct {
+	Path string
 }

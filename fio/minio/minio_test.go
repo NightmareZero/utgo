@@ -1,20 +1,27 @@
 package miniofs_test
 
 import (
+	"context"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/NightmareZero/nzgoutil/fio"
+	"github.com/NightmareZero/nzgoutil/fio/fioinit"
 )
 
 func beforeTest() {
-	// conf.LoadConf(utila.GetProjectRoot() + "/run/config.yaml")
-	// fioinit.Init(conf.Conf.Data.MinIO)
+	var cfg = fio.MinIO{
+		Endpoint: "127.0.0.1:9000",
+		Access:   "admin",
+		Secret:   "password",
+	}
+	fioinit.Init(cfg)
 }
 
 func TestWrite(t *testing.T) {
 	beforeTest()
-	bucket, err := fio.FileSystem.Bucket("test-1")
+	bucket, err := fio.FileSystem.Bucket("test")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -32,6 +39,68 @@ func TestWrite(t *testing.T) {
 	err = file.Close()
 	if err != nil {
 		t.Fatal("fail on close", err)
+	}
+
+	time.Sleep(5 * time.Second)
+
+}
+
+func TestMerge(t *testing.T) {
+	beforeTest()
+	fil, err := os.ReadFile("/home/user/tmp/log1.log")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	bucket, err := fio.FileSystem.Bucket("test")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	file1, err := bucket.OpenFile("test1.txt")
+	if err != nil {
+		t.Fatal("fail on open file", err)
+	}
+
+	_, err = file1.Write(fil)
+	if err != nil {
+		t.Fatal("fail on write data", err)
+	}
+
+	err = file1.Close()
+	if err != nil {
+		t.Fatal("fail on close", err)
+	}
+
+	file2, err := bucket.OpenFile("test2.txt")
+	if err != nil {
+		t.Fatal("fail on open file", err)
+	}
+
+	_, err = file2.Write(fil)
+	if err != nil {
+		t.Fatal("fail on write data", err)
+	}
+
+	err = file2.Close()
+	if err != nil {
+		t.Fatal("fail on close", err)
+	}
+
+	time.Sleep(5 * time.Second)
+
+	// merge
+	_, err = bucket.MergeFile(context.Background(), fio.MergeOption{
+		Path: "test/test.txt",
+	}, fio.MergeOption{
+		Path: "test/test1.txt",
+	}, fio.MergeOption{
+		Path: "test/test2.txt",
+	}, fio.MergeOption{
+		Path: "test/test3.txt",
+	})
+	if err != nil {
+		t.Fatal("fail on merge", err)
 	}
 
 	time.Sleep(5 * time.Second)
