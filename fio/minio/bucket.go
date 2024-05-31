@@ -28,26 +28,18 @@ func (m *MinioFileBucket) MergeFile(ctx context.Context, dst fio.MergeOption, sr
 	if len(srcs) == 0 {
 		return stat, fmt.Errorf("no source file")
 	}
-	// 通过第一个 '/' 拆分dst的bucket和object
-	dstPaths := strings.SplitN(dst.Path, "/", 2)
-	if len(dstPaths) != 2 {
-		return stat, fmt.Errorf("invalid destination path")
-	}
+
 	var (
 		dstOpt = minio.CopyDestOptions{
-			Bucket: dstPaths[0],
-			Object: dstPaths[1],
+			Bucket: m.bucket,
+			Object: dst.Path,
 		}
 		srcOpts = make([]minio.CopySrcOptions, 0, len(srcs))
 	)
-	for i, src := range srcs {
-		srcPaths := strings.SplitN(src.Path, "/", 2)
-		if len(srcPaths) != 2 {
-			return stat, fmt.Errorf("invalid source path %d", i)
-		}
+	for _, src := range srcs {
 		srcOpts = append(srcOpts, minio.CopySrcOptions{
-			Bucket: srcPaths[0],
-			Object: srcPaths[1],
+			Bucket: m.bucket,
+			Object: src.Path,
 		})
 	}
 
