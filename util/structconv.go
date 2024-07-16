@@ -68,3 +68,20 @@ func GobConv(src any, dst any) error {
 	}
 	return nil
 }
+
+func ToGob(input any) ([]byte, error) {
+	// 转换为字节流
+	var buf = bytes.Buffer{}
+	e := gob.NewEncoder(&buf)
+	err := e.Encode(input)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func FromGob(input []byte, parse any) error {
+	var buf = bytes.NewReader(input)
+	dec := gob.NewDecoder(buf)
+	return dec.Decode(parse)
+}
