@@ -14,7 +14,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/NightmareZero/nzgoutil/util"
+	"github.com/NightmareZero/nzgoutil/utilp"
 )
 
 type RequestHandler func(Ctx)
@@ -50,13 +50,13 @@ func (r *Ctx) doResponse1(code int, body io.Reader) (wirtten int64, err error) {
 
 func (r *Ctx) Text(statusCode int, txt string) (err error) {
 	r.RW.Header().Add("Content-Type", "text/plain; charset=utf-8")
-	r.doResponse(statusCode, util.String2Bytes(txt))
+	r.doResponse(statusCode, utilp.String2Bytes(txt))
 	return
 }
 
 func (r *Ctx) Html(statusCode int, html string) (err error) {
 	r.RW.Header().Add("Content-Type", "text/html; charset=utf-8")
-	r.doResponse(statusCode, util.String2Bytes(html))
+	r.doResponse(statusCode, utilp.String2Bytes(html))
 	return
 }
 
