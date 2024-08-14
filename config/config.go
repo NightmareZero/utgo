@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/NightmareZero/nzgoutil/config/prop"
-	"github.com/NightmareZero/nzgoutil/util"
+	"github.com/NightmareZero/nzgoutil/utilp"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 )
@@ -26,7 +26,7 @@ type Config struct {
 }
 
 func (c *Config) Val(path string) (ret any, getted bool) {
-	s := util.SplitBy(path, ".", "\\")
+	s := utilp.SplitBy(path, ".", "\\")
 	var cursor any = c.conf
 	for _, v := range s {
 		parent, ok := cursor.(map[string]any)

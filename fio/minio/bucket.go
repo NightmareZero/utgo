@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/NightmareZero/nzgoutil/fio"
-	"github.com/NightmareZero/nzgoutil/util"
+	"github.com/NightmareZero/nzgoutil/utilp"
 	"github.com/minio/madmin-go/v2"
 	"github.com/minio/minio-go/v7"
 )
@@ -49,7 +49,7 @@ func (m *MinioFileBucket) MergeFile(ctx context.Context, dst fio.MergeOption, sr
 	}
 
 	var statF = &FileStatHandler{}
-	util.GobConv(res, statF)
+	utilp.GobConv(res, statF)
 
 	return statF, nil
 }

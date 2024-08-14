@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/NightmareZero/nzgoutil/config/node"
-	"github.com/NightmareZero/nzgoutil/util"
+	"github.com/NightmareZero/nzgoutil/utilp"
 )
 
 const TAG_NAME = "prop"
@@ -46,9 +46,9 @@ func (r *propertiesReader) unmarshalLine(line string) {
 	}
 
 	// 获取key
-	sh := util.SplitHead(l, "=", "\\")
+	sh := utilp.SplitHead(l, "=", "\\")
 	// 拆分后方注释获取val
-	sv := util.SplitHead(sh[1], "#", "\\")
+	sv := utilp.SplitHead(sh[1], "#", "\\")
 
 	nodeKey := strings.TrimSpace(sh[0])
 	nodeVal := strings.TrimSpace(sv[0])

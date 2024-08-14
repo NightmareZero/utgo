@@ -5,7 +5,7 @@ import (
 	"io"
 
 	"github.com/NightmareZero/nzgoutil/fio"
-	"github.com/NightmareZero/nzgoutil/util"
+	"github.com/NightmareZero/nzgoutil/utilp"
 	"github.com/minio/minio-go/v7"
 )
 
@@ -35,7 +35,7 @@ func (m *MinioFile) Read(p []byte) (n int, err error) {
 func (m *MinioFile) Write(p []byte) (n int, err error) {
 	if m.pr == nil {
 		m.pr, m.pw = io.Pipe()
-		go util.Try(func() {
+		go utilp.Try(func() {
 			// 由于 objectSize=-1 , 所以PutObject会一直等待pr的数据, 直到pr被关闭
 			_, m.errMinio = m.fs.cl.PutObject(context.Background(), m.fs.bucket, m.name, m.pr, -1, minio.PutObjectOptions{})
 			m.pr.Close()
@@ -55,14 +55,14 @@ func (m *MinioFile) Write(p []byte) (n int, err error) {
 
 // Close implements fio.IFile
 func (m *MinioFile) Close() (err error) {
-	defer util.Try(func() {
+	defer utilp.Try(func() {
 		if m.rb != nil {
 			err = m.rb.Close()
 			m.rb = nil
 		}
 	})
 
-	defer util.Try(func() {
+	defer utilp.Try(func() {
 		if m.pr != nil {
 			m.pw.Close()
 			m.pw = nil

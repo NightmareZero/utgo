@@ -1,9 +1,9 @@
-package util_test
+package utilp_test
 
 import (
 	"testing"
 
-	"github.com/NightmareZero/nzgoutil/util"
+	"github.com/NightmareZero/nzgoutil/utilp"
 )
 
 type Tgc struct {
@@ -16,7 +16,7 @@ func TestGobConv(t *testing.T) {
 	}
 	var out Tgc
 
-	err := util.GobConv(in, &out)
+	err := utilp.GobConv(in, &out)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
