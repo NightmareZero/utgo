@@ -1,9 +1,9 @@
 package utilp
 
 import (
-	"fmt"
 	"runtime"
 
+	"github.com/NightmareZero/nzgoutil/log"
 	"github.com/pkg/errors"
 )
 
@@ -60,6 +60,6 @@ func doRecover(msg string, pan any, goAfterRecover func(err error)) {
 			goAfterRecover(err)
 		})
 	} else {
-		fmt.Printf("%+v\n", err)
+		log.Errorf("panic: %+v", err)
 	}
 }

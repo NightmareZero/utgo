@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/NightmareZero/nzgoutil/utilp"
 	"github.com/NightmareZero/nzgoutil/vars"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"go.uber.org/zap"
@@ -54,7 +53,7 @@ func getWriterAsync(logPath string, name string) io.Writer {
 }
 
 func getZapCores(config LogConfig, encoder zapcore.Encoder) (ret []zapcore.Core) {
-	fixedPath := strings.TrimRight(utilp.If(len(config.Path) > 0, config.Path, "./log/"), vars.PATH_DELIMITER) + vars.PATH_DELIMITER
+	fixedPath := strings.TrimRight(If(len(config.Path) > 0, config.Path, "./log/"), vars.PATH_DELIMITER) + vars.PATH_DELIMITER
 
 	if !config.NotToFile {
 		// 初始化 log 文件输出
@@ -64,7 +63,7 @@ func getZapCores(config LogConfig, encoder zapcore.Encoder) (ret []zapcore.Core)
 
 		// 如果未开启日志合并
 		if !config.MergeError {
-			fixedErrPath := strings.TrimRight(utilp.If(len(config.ErrPath) > 0, config.ErrPath, "./log/"), vars.PATH_DELIMITER) + vars.PATH_DELIMITER
+			fixedErrPath := strings.TrimRight(If(len(config.ErrPath) > 0, config.ErrPath, "./log/"), vars.PATH_DELIMITER) + vars.PATH_DELIMITER
 			errorLogWriter := zapcore.AddSync(getFileWriter(config.Sync, fixedErrPath, "err"))
 			ret = append(ret, zapcore.NewCore(
 				encoder, errorLogWriter, zap.ErrorLevel))
@@ -80,4 +79,13 @@ func getZapCores(config LogConfig, encoder zapcore.Encoder) (ret []zapcore.Core)
 	}
 
 	return
+}
+
+// 伪三元表达式
+// PS: 请注意，由于go的机制, trueVal, falseVal 都是已定值(在传入if前就确定了), 可能会导致panic
+func If[T any](condition bool, trueVal, falseVal T) T {
+	if condition {
+		return trueVal
+	}
+	return falseVal
 }
