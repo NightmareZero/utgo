@@ -1,7 +1,9 @@
 package utilp
 
 import (
+	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 	"unsafe"
 )
@@ -90,4 +92,26 @@ func SplitHead(content, spliter, escape string) (ret [2]string) {
 		return [2]string{strings.ReplaceAll(s[0], holder, spliter), strings.ReplaceAll(s[1], holder, spliter)}
 	}
 	return [2]string{strings.ReplaceAll(s[0], holder, spliter)}
+}
+
+// ToStr 将任意类型转换为字符串
+func ToStr(data any) string {
+	switch v := data.(type) {
+	case string:
+		return v
+	case int:
+		return strconv.Itoa(v)
+	case int8, int16, int32, int64:
+		return strconv.FormatInt(reflect.ValueOf(v).Int(), 10)
+	case uint, uint8, uint16, uint32, uint64:
+		return strconv.FormatUint(reflect.ValueOf(v).Uint(), 10)
+	case bool:
+		return strconv.FormatBool(v)
+	case float32:
+		return strconv.FormatFloat(float64(v), 'f', -1, 32)
+	case float64:
+		return strconv.FormatFloat(v, 'f', -1, 64)
+	default:
+		return fmt.Sprintf("%v", v)
+	}
 }
