@@ -1,4 +1,4 @@
-package utila
+package utool
 
 import (
 	"bytes"
@@ -7,20 +7,20 @@ import (
 )
 
 type JsonObj struct {
-	OrderedMap[string, any]
+	JsonTObj[any]
 }
 
-func NewJsonObj() *JsonObj {
-	return &JsonObj{*NewOrderedMap[string, any]()}
+type JsonTObj[T any] struct {
+	OrderedMap[string, T]
 }
 
 // MarshalJSON implements the json.Marshaler interface.
-func (m JsonObj) MarshalJSON() ([]byte, error) {
+func (m JsonTObj[T]) MarshalJSON() ([]byte, error) {
 	// Create a slice to hold the ordered entries
 	orderedEntries := make([]mapEntry[string, json.RawMessage], 0, m.Len())
 
 	// Iterate over the map and marshal each value
-	m.Range(func(key string, val any) bool {
+	m.Range(func(key string, val T) bool {
 		rawVal, err := json.Marshal(val)
 		if err != nil {
 			return false
@@ -43,7 +43,7 @@ func (m JsonObj) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
-func (m *JsonObj) UnmarshalJSON(data []byte) error {
+func (m *JsonTObj[T]) UnmarshalJSON(data []byte) error {
 	// Create a temporary slice to hold the ordered entries
 	var tempSlice []struct {
 		Key string          `json:"key"`
@@ -90,7 +90,7 @@ func (m *JsonObj) UnmarshalJSON(data []byte) error {
 
 	// Iterate over the temporary slice and add each entry to the JsonObj
 	for _, entry := range tempSlice {
-		var val any
+		var val T
 		if err := json.Unmarshal(entry.Val, &val); err != nil {
 			return err
 		}
@@ -106,13 +106,10 @@ type OrderedMap[K comparable, V any] struct {
 	last   *mapEntry[K, V]
 }
 
-func NewOrderedMap[K comparable, V any]() *OrderedMap[K, V] {
-	return &OrderedMap[K, V]{
-		entrys: make(map[K]*mapEntry[K, V]),
-	}
-}
-
 func (m *OrderedMap[K, V]) Put(key K, val V) {
+	if m.entrys == nil {
+		m.entrys = make(map[K]*mapEntry[K, V])
+	}
 	if entry, ok := m.entrys[key]; ok {
 		entry.val = val
 	} else {
@@ -177,7 +174,7 @@ func (m *OrderedMap[K, V]) Clear() {
 }
 
 func (m *OrderedMap[K, V]) Clone() *OrderedMap[K, V] {
-	clone := NewOrderedMap[K, V]()
+	clone := &OrderedMap[K, V]{}
 	m.Range(func(key K, val V) bool {
 		clone.Put(key, val)
 		return true

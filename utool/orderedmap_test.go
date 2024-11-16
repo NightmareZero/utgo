@@ -1,4 +1,4 @@
-package utila
+package utool
 
 import (
 	"encoding/json"
@@ -6,7 +6,7 @@ import (
 )
 
 func TestJsonObj_MarshalJSON(t *testing.T) {
-	obj := NewJsonObj()
+	obj := JsonObj{}
 	obj.Put("name", "Alice")
 	obj.Put("age", 30)
 	obj.Put("city", "Wonderland")
@@ -46,7 +46,7 @@ func TestJsonObj_UnmarshalJSON(t *testing.T) {
 }
 
 func TestOrderedMap_Put(t *testing.T) {
-	m := NewOrderedMap[string, any]()
+	m := OrderedMap[any, any]{}
 	m.Put("key1", "value1")
 	m.Put("key2", "value2")
 
@@ -59,7 +59,7 @@ func TestOrderedMap_Put(t *testing.T) {
 }
 
 func TestOrderedMap_Get(t *testing.T) {
-	m := NewOrderedMap[string, any]()
+	m := OrderedMap[any, any]{}
 	m.Put("key1", "value1")
 
 	if val, ok := m.Get("key1"); !ok || val != "value1" {
@@ -72,7 +72,7 @@ func TestOrderedMap_Get(t *testing.T) {
 }
 
 func TestOrderedMap_Remove(t *testing.T) {
-	m := NewOrderedMap[string, any]()
+	m := OrderedMap[any, any]{}
 	m.Put("key1", "value1")
 	m.Put("key2", "value2")
 	m.Remove("key1")
@@ -90,7 +90,7 @@ func TestOrderedMap_Remove(t *testing.T) {
 }
 
 func TestOrderedMap_Keys(t *testing.T) {
-	m := NewOrderedMap[string, any]()
+	m := OrderedMap[any, any]{}
 	m.Put("key1", "value1")
 	m.Put("key2", "value2")
 
@@ -105,12 +105,12 @@ func TestOrderedMap_Keys(t *testing.T) {
 }
 
 func TestOrderedMap_Range(t *testing.T) {
-	m := NewOrderedMap[string, any]()
+	m := OrderedMap[any, any]{}
 	m.Put("key1", "value1")
 	m.Put("key2", "value2")
 
 	count := 0
-	m.Range(func(key string, val any) bool {
+	m.Range(func(key any, val any) bool {
 		count++
 		return true
 	})
@@ -121,7 +121,7 @@ func TestOrderedMap_Range(t *testing.T) {
 }
 
 func TestOrderedMap_Len(t *testing.T) {
-	m := NewOrderedMap[string, any]()
+	m := OrderedMap[any, any]{}
 	m.Put("key1", "value1")
 	m.Put("key2", "value2")
 
@@ -131,7 +131,7 @@ func TestOrderedMap_Len(t *testing.T) {
 }
 
 func TestOrderedMap_Clear(t *testing.T) {
-	m := NewOrderedMap[string, any]()
+	m := OrderedMap[any, any]{}
 	m.Put("key1", "value1")
 	m.Clear()
 
@@ -141,7 +141,7 @@ func TestOrderedMap_Clear(t *testing.T) {
 }
 
 func TestOrderedMap_Clone(t *testing.T) {
-	m := NewOrderedMap[string, any]()
+	m := OrderedMap[any, any]{}
 	m.Put("key1", "value1")
 	clone := m.Clone()
 
@@ -151,13 +151,13 @@ func TestOrderedMap_Clone(t *testing.T) {
 }
 
 func TestOrderedMap_Merge(t *testing.T) {
-	m1 := NewOrderedMap[string, any]()
+	m1 := OrderedMap[any, any]{}
 	m1.Put("key1", "value1")
 
-	m2 := NewOrderedMap[string, any]()
+	m2 := OrderedMap[any, any]{}
 	m2.Put("key2", "value2")
 
-	m1.Merge(m2)
+	m1.Merge(&m2)
 
 	if val, ok := m1.Get("key2"); !ok || val != "value2" {
 		t.Errorf("Expected key2 to be value2 after merge, got %v", val)
@@ -165,7 +165,7 @@ func TestOrderedMap_Merge(t *testing.T) {
 }
 
 func TestOrderedMap_ToList(t *testing.T) {
-	m := NewOrderedMap[string, any]()
+	m := OrderedMap[any, any]{}
 	m.Put("key1", "value1")
 	m.Put("key2", "value2")
 
@@ -180,7 +180,7 @@ func TestOrderedMap_ToList(t *testing.T) {
 }
 
 func TestOrderedMap_ToMap(t *testing.T) {
-	m := NewOrderedMap[string, any]()
+	m := OrderedMap[any, any]{}
 	m.Put("key1", "value1")
 	m.Put("key2", "value2")
 
