@@ -48,3 +48,7 @@ func OrZero[T any](data *T) T {
 	}
 	return *data
 }
+
+func PtrOf[T any](t T) *T {
+	return &t
+}
