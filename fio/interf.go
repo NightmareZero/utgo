@@ -7,6 +7,7 @@ import (
 )
 
 var FileSystem IFileSystem
+var ErrBucketNotFound = os.ErrNotExist
 
 // 默认使用本地文件系统(以后需要被 minio相关实现覆盖)
 type IFileSystem interface {
