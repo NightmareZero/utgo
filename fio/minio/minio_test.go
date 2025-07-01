@@ -21,7 +21,7 @@ func beforeTest() {
 
 func TestWrite(t *testing.T) {
 	beforeTest()
-	bucket, err := fio.FileSystem.Bucket("test")
+	bucket, err := fio.FileSystem.Bucket("test", true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -52,7 +52,7 @@ func TestMerge(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	bucket, err := fio.FileSystem.Bucket("test")
+	bucket, err := fio.FileSystem.Bucket("test", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -109,7 +109,7 @@ func TestMerge(t *testing.T) {
 
 func TestList(t *testing.T) {
 	beforeTest()
-	bucket, err := fio.FileSystem.Bucket("test1")
+	bucket, err := fio.FileSystem.Bucket("test1", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -129,7 +129,7 @@ func TestList(t *testing.T) {
 func TestInfo(t *testing.T) {
 	beforeTest()
 
-	mis, err := fio.FileSystem.Bucket("test1")
+	mis, err := fio.FileSystem.Bucket("test1", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -144,7 +144,7 @@ func TestInfo(t *testing.T) {
 func TestQuota(t *testing.T) {
 	beforeTest()
 
-	mis, err := fio.FileSystem.Bucket("test1")
+	mis, err := fio.FileSystem.Bucket("test1", false)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -45,7 +45,7 @@ func (m *MinIOFileSystem) IsOnline() bool {
 }
 
 // Bucket implements fio.IFileSystem.
-func (m *MinIOFileSystem) Bucket(name string) (fio.IFileBucket, error) {
+func (m *MinIOFileSystem) Bucket(name string, create bool) (fio.IFileBucket, error) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	name = strings.ToLower(name)

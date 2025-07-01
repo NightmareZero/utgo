@@ -223,3 +223,20 @@ func (m *MinioFileBucket) List(path string) (res []fs.FileInfo, err error) {
 	}
 	return
 }
+
+// Destroy implements fio.IFileBucket.
+func (m *MinioFileBucket) Destroy() error {
+	ctx, cf := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cf()
+
+	// 删除存储桶
+	err := m.cl.RemoveBucket(ctx, m.bucket)
+	if err != nil {
+		return fmt.Errorf("error on remove bucket: %v", err)
+	}
+
+	// 清理连接
+	m.cl = nil
+	m.mc = nil
+	return nil
+}

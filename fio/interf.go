@@ -11,7 +11,7 @@ var FileSystem IFileSystem
 // 默认使用本地文件系统(以后需要被 minio相关实现覆盖)
 type IFileSystem interface {
 	IsOnline() bool
-	Bucket(name string) (IFileBucket, error)
+	Bucket(name string, create bool) (IFileBucket, error)
 }
 
 type IFileBucket interface {
@@ -24,6 +24,7 @@ type IFileBucket interface {
 	MergeFile(ctx context.Context, dst MergeOption, src ...MergeOption) (IFileStat, error)
 	Stat(name string) (IFileStat, error)
 	Remove(name string) error
+	Destroy() error
 }
 
 type IFile interface {

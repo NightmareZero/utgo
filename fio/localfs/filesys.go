@@ -17,7 +17,7 @@ func (l *LocalFileSystem) Init() {
 }
 
 // Bucket implements fio.IFileSystem.
-func (l *LocalFileSystem) Bucket(name string) (fio.IFileBucket, error) {
+func (l *LocalFileSystem) Bucket(name string, create bool) (fio.IFileBucket, error) {
 	l.lock.Lock()
 	defer l.lock.Unlock()
 

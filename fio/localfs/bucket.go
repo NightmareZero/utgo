@@ -95,6 +95,9 @@ func (*LocalFileBucket) List(path string) ([]fs.FileInfo, error) {
 }
 
 func (l *LocalFileBucket) Init() error {
+	if l.basePath == "" || l.basePath == "/" {
+		return fmt.Errorf("base path cannot be empty or root")
+	}
 	return assertDirExist(l.basePath)
 }
 
@@ -159,6 +162,16 @@ func assertDirExist(dirpath string) error {
 	}
 	if !dir_fi.IsDir() {
 		return fmt.Errorf("target path not a folder")
+	}
+	return nil
+}
+
+// Destroy implements fio.IFileBucket.
+func (l *LocalFileBucket) Destroy() error {
+	// 删除整个目录
+	err := os.RemoveAll(l.basePath)
+	if err != nil {
+		return fmt.Errorf("failed to destroy bucket %s: %w", l.bucket, err)
 	}
 	return nil
 }
