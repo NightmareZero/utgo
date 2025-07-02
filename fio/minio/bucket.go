@@ -58,7 +58,7 @@ func (m *MinioFileBucket) Bucket() string {
 	return m.bucket
 }
 
-func (m *MinioFileBucket) Init() (err error) {
+func (m *MinioFileBucket) Init(create bool) (err error) {
 	ctx, cf := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cf()
 
@@ -68,18 +68,22 @@ func (m *MinioFileBucket) Init() (err error) {
 		return err
 	}
 	if !b {
-		// 不存在则创建
-		err = m.cl.MakeBucket(ctx, m.bucket, minio.MakeBucketOptions{})
-		if err != nil {
-			return err
-		}
-		var defaultQuota int64 = 1024
-		err = m.SetConfig(fio.BucketConfig{
-			Quota: &defaultQuota,
-		})
-		if err != nil {
-			m.cl.RemoveBucket(ctx, m.bucket)
-			return err
+		if create {
+			// 不存在则创建
+			err = m.cl.MakeBucket(ctx, m.bucket, minio.MakeBucketOptions{})
+			if err != nil {
+				return err
+			}
+			var defaultQuota int64 = 1024
+			err = m.SetConfig(fio.BucketConfig{
+				Quota: &defaultQuota,
+			})
+			if err != nil {
+				m.cl.RemoveBucket(ctx, m.bucket)
+				return err
+			}
+		} else {
+			return fio.ErrBucketNotFound
 		}
 
 	}

@@ -94,11 +94,27 @@ func (*LocalFileBucket) List(path string) ([]fs.FileInfo, error) {
 	return res, nil
 }
 
-func (l *LocalFileBucket) Init() error {
+func (l *LocalFileBucket) Init(create bool) error {
 	if l.basePath == "" || l.basePath == "/" {
 		return fmt.Errorf("base path cannot be empty or root")
 	}
-	return assertDirExist(l.basePath)
+	if create {
+		return assertDirExist(l.basePath)
+	} else {
+		// 检查目录是否存在
+		dir_fi, err := os.Stat(l.basePath)
+		if err != nil {
+			if os.IsNotExist(err) {
+				return fmt.Errorf("bucket %s does not exist", l.bucket)
+			} else {
+				return err
+			}
+		}
+		if !dir_fi.IsDir() {
+			return fmt.Errorf("bucket %s is not a directory", l.bucket)
+		}
+		return nil
+	}
 }
 
 // OpenFile implements IFileSystem

@@ -53,7 +53,7 @@ func (m *MinIOFileSystem) Bucket(name string, create bool) (fio.IFileBucket, err
 	if b, ok := m.buckets[name]; ok {
 		// 存在则返回
 		return b, nil
-	} else if create {
+	} else {
 		// 不存则创建后返回
 		b = &MinioFileBucket{
 			cl:     m.cl,
@@ -61,15 +61,13 @@ func (m *MinIOFileSystem) Bucket(name string, create bool) (fio.IFileBucket, err
 			bucket: name,
 		}
 		// 初始化
-		err := b.Init()
+		err := b.Init(create)
 		if err != nil {
 			return nil, err
 		}
 		// 保存
 		m.buckets[name] = b
 		return b, nil
-	} else {
-		return nil, fio.ErrBucketNotFound
 	}
 
 }

@@ -24,22 +24,20 @@ func (l *LocalFileSystem) Bucket(name string, create bool) (fio.IFileBucket, err
 	if b, ok := l.buckets[name]; ok {
 		// 存在则返回
 		return b, nil
-	} else if create {
+	} else {
 		// 不存则创建后返回
 		b = &LocalFileBucket{
 			bucket:   name,
 			basePath: l.BasePath + "/" + name + "/",
 		}
 		// 初始化
-		err := b.Init()
+		err := b.Init(create)
 		if err != nil {
 			return nil, err
 		}
 		// 保存
 		l.buckets[name] = b
 		return b, nil
-	} else {
-		return nil, fio.ErrBucketNotFound
 	}
 
 }
