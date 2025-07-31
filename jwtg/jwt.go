@@ -47,7 +47,7 @@ func (g *JwtGenerator[T]) Sign(u T, opt SignOption) (token []byte, err error) {
 			Subject:        "token",
 			Audience:       jwt.Audience{},
 			ExpirationTime: jwt.NumericDate(now.Add(time.Duration(exp) * time.Minute)),
-			NotBefore:      jwt.NumericDate(now.Add(30 * time.Minute)),
+			NotBefore:      jwt.NumericDate(now),
 			IssuedAt:       jwt.NumericDate(now),
 			JWTID:          idg.UuidV1().Str22(),
 		},
@@ -67,7 +67,7 @@ func (g *JwtGenerator[T]) Refresh(token []byte, opt SignOption) (newToken []byte
 	}
 	now := time.Now()
 	t.ExpirationTime = jwt.NumericDate(now.Add(time.Duration(opt.ExpMinute) * time.Minute))
-	t.NotBefore = jwt.NumericDate(now.Add(time.Duration(opt.ExpMinute) * time.Minute / 2))
+	t.NotBefore = jwt.NumericDate(now)
 
 	newToken, err = jwt.Sign(t, g.alg)
 	return
