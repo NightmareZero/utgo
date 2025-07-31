@@ -54,8 +54,6 @@ func (g *JwtGenerator[T]) Sign(u T, opt SignOption) (token []byte, err error) {
 		Tag: u,
 	}
 
-	pl.NotBefore = jwt.NumericDate(now.Add(time.Duration(exp) * time.Minute / 2))
-
 	token, err = jwt.Sign(pl, g.alg)
 	return
 }
