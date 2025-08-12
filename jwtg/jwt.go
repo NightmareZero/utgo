@@ -71,6 +71,27 @@ func (g *JwtGenerator[T]) Refresh(token []byte, opt SignOption) (newToken []byte
 	return
 }
 
+func (g *JwtGenerator[T]) Refresh2(token []byte, opt SignOption, onRefresh func(t JwtToken[T]) (T, error)) (newToken []byte, err error) {
+	t, err := g.Verify(token)
+	if err != nil {
+		return
+	}
+
+	if onRefresh != nil {
+		t.Tag, err = onRefresh(t)
+		if err != nil {
+			return
+		}
+	}
+
+	now := time.Now()
+	t.ExpirationTime = jwt.NumericDate(now.Add(time.Duration(opt.ExpMinute) * time.Minute))
+	t.NotBefore = jwt.NumericDate(now.Add(-30 * time.Second))
+
+	newToken, err = jwt.Sign(t, g.alg)
+	return
+}
+
 func (g *JwtGenerator[T]) Verify(b []byte) (token JwtToken[T], err error) {
 	token = JwtToken[T]{}
 	_, err = jwt.Verify(b, g.alg, &token)
