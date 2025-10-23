@@ -1,11 +1,12 @@
 package miniofs
 
 import (
+	"bytes"
 	"context"
 	"io"
+	"sync"
 
 	"github.com/NightmareZero/nzgoutil/fio"
-	"github.com/NightmareZero/nzgoutil/utilp"
 	"github.com/minio/minio-go/v7"
 )
 
@@ -15,11 +16,15 @@ type MinioFile struct {
 	fs   *MinioFileBucket
 	name string
 	rb   io.ReadCloser
-
-	errMinio   error
-	pr         *io.PipeReader
-	pw         *io.PipeWriter
-	uploadDone chan struct{} // 用于等待上传完成
+	// multipart 上传相关字段
+	mu       sync.Mutex
+	errMinio error
+	uploadID string
+	partSize int64
+	buf      *bytes.Buffer
+	parts    []minio.CompletePart
+	partNum  int
+	closed   bool
 }
 
 // Read implements fio.IFile
@@ -42,26 +47,67 @@ func (m *MinioFile) Read(p []byte) (n int, err error) {
 
 // Write implements fio.IFile
 func (m *MinioFile) Write(p []byte) (n int, err error) {
-	if m.pr == nil {
-		m.pr, m.pw = io.Pipe()
-		m.uploadDone = make(chan struct{})
-		go utilp.Try(func() {
-			defer close(m.uploadDone) // 上传完成后关闭通道
-			// 由于 objectSize=-1 , 所以PutObject会一直等待pr的数据, 直到pr被关闭
-			_, m.errMinio = m.fs.cl.PutObject(context.Background(), m.fs.bucket, m.name, m.pr, -1, minio.PutObjectOptions{})
-			m.pr.Close()
-		})
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
-	}
 	if m.errMinio != nil {
 		return 0, m.errMinio
 	}
 
-	var written int
-	written, err = m.pw.Write(p)
-	// print("written:", written, "err:", err, "")
+	if m.closed {
+		return 0, io.ErrClosedPipe
+	}
 
-	return int(written), err
+	// 初始化 multipart 状态（首次写入）
+	if m.uploadID == "" {
+		// default part size 5MB
+		m.partSize = 5 * 1024 * 1024
+		m.buf = bytes.NewBuffer(nil)
+		m.partNum = 1
+		m.parts = nil
+
+		core := minio.Core{Client: m.fs.cl}
+		uploadID, err := core.NewMultipartUpload(context.Background(), m.fs.bucket, m.name, minio.PutObjectOptions{})
+		if err != nil {
+			m.errMinio = err
+			return 0, err
+		}
+		m.uploadID = uploadID
+	}
+
+	// 写入到缓冲
+	written, err := m.buf.Write(p)
+	if err != nil {
+		m.errMinio = err
+		return 0, err
+	}
+
+	// 当缓冲达到 partSize 时上传该 part
+	core := minio.Core{Client: m.fs.cl}
+	for int64(m.buf.Len()) >= m.partSize {
+		partBytes := make([]byte, m.partSize)
+		_, _ = m.buf.Read(partBytes)
+
+		// 上传 part
+		partReader := bytes.NewReader(partBytes)
+		objPart, err := core.PutObjectPart(context.Background(), m.fs.bucket, m.name, m.uploadID, m.partNum, partReader, int64(len(partBytes)), minio.PutObjectPartOptions{})
+		if err != nil {
+			// abort multipart
+			_ = core.AbortMultipartUpload(context.Background(), m.fs.bucket, m.name, m.uploadID)
+			m.errMinio = err
+			// clear upload state so future operations don't reuse this uploadID
+			m.uploadID = ""
+			m.buf = nil
+			m.parts = nil
+			m.partNum = 0
+			return 0, err
+		}
+		// 记录 part
+		m.parts = append(m.parts, minio.CompletePart{PartNumber: m.partNum, ETag: objPart.ETag})
+		m.partNum++
+	}
+
+	return written, nil
 }
 
 // Close implements fio.IFile
@@ -74,19 +120,51 @@ func (m *MinioFile) Close() (err error) {
 		m.rb = nil
 	}
 
-	// 再处理写入流
-	if m.pw != nil {
-		m.pw.Close()
-		m.pw = nil
+	// 再处理写入：如果没有 multipart，则直接返回
+	// mark closed to prevent further writes
+	m.mu.Lock()
+	m.closed = true
+	uploadID := m.uploadID
+	buf := m.buf
+	parts := m.parts
+	partNum := m.partNum
+	m.mu.Unlock()
 
-		// 等待 Minio 上传完成
-		if m.uploadDone != nil {
-			<-m.uploadDone
-			// 检查上传是否有错误，优先返回上传错误
-			if m.errMinio != nil {
-				err = m.errMinio
-			}
-		}
+	if uploadID == "" {
+		return err
 	}
-	return
+
+	core := minio.Core{Client: m.fs.cl}
+
+	// 上传剩余未满 part
+	if buf != nil && buf.Len() > 0 {
+		rem := make([]byte, buf.Len())
+		_, _ = buf.Read(rem)
+		partReader := bytes.NewReader(rem)
+		objPart, err2 := core.PutObjectPart(context.Background(), m.fs.bucket, m.name, uploadID, partNum, partReader, int64(len(rem)), minio.PutObjectPartOptions{})
+		if err2 != nil {
+			_ = core.AbortMultipartUpload(context.Background(), m.fs.bucket, m.name, uploadID)
+			return err2
+		}
+		parts = append(parts, minio.CompletePart{PartNumber: partNum, ETag: objPart.ETag})
+	}
+
+	// Complete multipart
+	_, err = core.CompleteMultipartUpload(context.Background(), m.fs.bucket, m.name, uploadID, parts, minio.PutObjectOptions{})
+	if err != nil {
+		_ = core.AbortMultipartUpload(context.Background(), m.fs.bucket, m.name, uploadID)
+		return err
+	}
+
+	// cleanup state
+	m.mu.Lock()
+	m.uploadID = ""
+	m.buf = nil
+	m.parts = nil
+	m.partNum = 0
+	m.mu.Unlock()
+
+	return nil
 }
+
+// multipart implementation complete

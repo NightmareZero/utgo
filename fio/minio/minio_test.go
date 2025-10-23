@@ -2,6 +2,7 @@ package miniofs_test
 
 import (
 	"context"
+	"io"
 	"os"
 	"testing"
 	"time"
@@ -12,9 +13,9 @@ import (
 
 func beforeTest() {
 	var cfg = fio.MinIO{
-		Endpoint: "127.0.0.1:9000",
+		Endpoint: "10.2.1.45:19000",
 		Access:   "admin",
-		Secret:   "password",
+		Secret:   "minio123",
 	}
 	fioinit.Init(cfg)
 }
@@ -26,17 +27,36 @@ func TestWrite(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	start := time.Now().UnixMilli()
+
+	// 从磁盘读取一个文件
+	readFile, err := os.Open("/root/ffmpeg-master-latest-linux64-gpl.tar.xz")
+	if err != nil {
+		t.Fatal("fail on open local file", err)
+	}
+	defer readFile.Close()
+
 	file, err := bucket.OpenFile("test.txt")
 	if err != nil {
 		t.Fatal("fail on open file", err)
 	}
 
-	_, err = file.Write([]byte("hello world"))
+	read := time.Now().UnixMilli()
+	t.Log("read file time:", read-start, "ms")
+	var buf = make([]byte, 1024*1024)
+	w, err := io.CopyBuffer(file, readFile, buf)
 	if err != nil {
 		t.Fatal("fail on write data", err)
 	}
 
+	copy := time.Now().UnixMilli()
+	t.Log("copy file time:", copy-read, "ms")
+	t.Log("write bytes:", w)
+
 	err = file.Close()
+	write := time.Now().UnixMilli()
+	t.Log("close file time:", write-copy, "ms")
+	t.Log("total time:", write-start, "ms")
 	if err != nil {
 		t.Fatal("fail on close", err)
 	}
