@@ -22,6 +22,7 @@ type IFileBucket interface {
 	List(path string) ([]os.FileInfo, error)
 	Open(name string) (io.ReadSeekCloser, error)
 	OpenFile(name string) (IFile, error)
+	// MergeFile merges source files into dst in order and does not remove source files.
 	MergeFile(ctx context.Context, dst MergeOption, src ...MergeOption) (IFileStat, error)
 	Stat(name string) (IFileStat, error)
 	Remove(name string) error

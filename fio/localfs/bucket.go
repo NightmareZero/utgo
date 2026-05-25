@@ -46,14 +46,6 @@ func (l *LocalFileBucket) MergeFile(ctx context.Context, dst fio.MergeOption, sr
 
 	}
 
-	for _, s := range src {
-		// Remove the source file
-		err = l.Remove(s.Path)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	// Get the file stat of the destination file
 	stat, err := l.Stat(dst.Path)
 	if err != nil {
