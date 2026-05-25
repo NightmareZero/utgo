@@ -43,7 +43,7 @@ func (m *MinioFileBucket) MergeFile(ctx context.Context, dst fio.MergeOption, sr
 		})
 	}
 
-	res, err := m.cl.ComposeObject(context.Background(), dstOpt, srcOpts...)
+	res, err := m.cl.ComposeObject(ctx, dstOpt, srcOpts...)
 	if err != nil {
 		return stat, fmt.Errorf("MergeFile failed: %w", err)
 	}
