@@ -13,9 +13,9 @@ import (
 
 func beforeTest() {
 	var cfg = fio.MinIO{
-		Endpoint: "10.2.1.45:19000",
+		Endpoint: "localhost:9000",
 		Access:   "admin",
-		Secret:   "minio123",
+		Secret:   "123",
 	}
 	fioinit.Init(cfg)
 }
