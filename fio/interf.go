@@ -68,7 +68,7 @@ type MergeOption struct {
 //   - minio 实现: *miniofs.MinioClusterExtra（持有原始 *madmin.InfoMessage）
 //   - localfs 实现: nil
 type ClusterInfo struct {
-	BackendType   string // 后端类型: "Erasure"/"FS"/"Gateway"/"LocalFS"
+	BackendType   string // 后端类型: "Erasure"/"FS"/"Gateway"/"LocalFS"(localfs)/"SeaweedFS"(seaweedfs)
 	Mode          string // 集群运行模式 (minio 专有，localfs 留空)
 	TotalCapacity uint64 // 总容量 (字节)
 	UsedCapacity  uint64 // 已用容量 (字节)

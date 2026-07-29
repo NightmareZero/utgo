@@ -16,3 +16,4 @@ vendor/
 test/dev
 /.vscode
 tmp
+/tmp
