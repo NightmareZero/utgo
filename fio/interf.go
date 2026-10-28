@@ -46,6 +46,16 @@ type IFileStat interface {
 	Sha1() string
 }
 
+// IFileWriterAt 支持基于偏移的写入，语义对齐 io.WriterAt。
+//   - off == 当前文件大小: 追加写
+//   - off <  当前文件大小: 部分写入（覆盖指定位置）
+//
+// 为可选接口：后端按需实现，调用方通过类型断言使用。
+// 例: seaweedfs 实现追加（Filer ?op=append），部分写入返回 ErrPartialWriteNotSupported。
+type IFileWriterAt interface {
+	WriteAt(p []byte, off int64) (n int, err error)
+}
+
 type BucketStat struct {
 	Quota int64  // 配额 (单位mb)
 	Vers  bool   // 是否开启版本控制

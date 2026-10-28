@@ -14,5 +14,7 @@ type SeaweedFS struct {
 	Endpoint string // SeaweedFS S3 网关地址，如 "localhost:8333"
 	Access   string
 	Secret   string
-	Secure   bool
+	Secure   bool // FilerURL 为 SeaweedFS Filer HTTP 地址（含 scheme，如 "http://localhost:8888"），
+	// 用于追加写（走 Filer ?op=append）。为空则追加功能降级为 read-modify-write。
+	FilerURL string
 }

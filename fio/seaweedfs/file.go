@@ -3,6 +3,8 @@ package seaweedfs
 import (
 	"bytes"
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"sync"
 
@@ -11,10 +13,14 @@ import (
 )
 
 var _ fio.IFile = &SeaweedFSFile{}
+var _ fio.IFileWriterAt = &SeaweedFSFile{}
 
 // SeaweedFSFile 实现 fio.IFile。
 // 写语义与 minio 后端一致：multipart upload 顺序追加；Close 时完成上传。
 // 读取语义：惰性 GetObject，EOF 时关闭流。
+// 额外实现 fio.IFileWriterAt：
+//   - Write（multipart 覆盖创建）与 WriteAt（位置写）语义不同，互斥不可并发使用
+//   - WriteAt 仅支持追加（off == 当前文件大小）；部分写入（off < fileSize）返回 ErrPartialWriteNotSupported
 type SeaweedFSFile struct {
 	fs   *SeaweedFSFileBucket
 	name string
@@ -182,4 +188,106 @@ func (f *SeaweedFSFile) Close() (err error) {
 	f.mu.Unlock()
 
 	return nil
+}
+
+// WriteAt implements fio.IFileWriterAt（io.WriterAt 语义）。
+//
+// 行为：
+//   - 文件不存在 + off==0: PutObject 创建
+//   - off == 当前文件大小: 追加（走 Filer ?op=append，小文件自动回退 read-modify-write）
+//   - off <  当前文件大小: 返回 ErrPartialWriteNotSupported（待实现）
+//   - off >  当前文件大小: 不支持（写洞）
+//
+// 与 Write（multipart 覆盖）互斥：若已有进行中的 multipart 上传，返回错误。
+func (f *SeaweedFSFile) WriteAt(p []byte, off int64) (n int, err error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	if f.closed {
+		return 0, io.ErrClosedPipe
+	}
+	if len(p) == 0 {
+		return 0, nil
+	}
+	// 与 multipart Write 互斥
+	if f.uploadID != "" {
+		return 0, errors.New("seaweedfs: WriteAt conflicts with in-progress multipart Write")
+	}
+
+	ctx := context.Background()
+
+	// 取当前文件大小
+	stat, serr := f.fs.Stat(f.name)
+	fileExists := serr == nil
+	var fileSize int64
+	if fileExists {
+		fileSize = stat.Size()
+	}
+
+	if !fileExists {
+		if off != 0 {
+			return 0, fmt.Errorf("seaweedfs: WriteAt at offset %d on non-existent file %q", off, f.name)
+		}
+		// off==0 + 文件不存在 → 创建
+		_, err = f.fs.cl.PutObject(ctx, f.fs.bucket, f.name, bytes.NewReader(p), int64(len(p)), minio.PutObjectOptions{})
+		if err != nil {
+			return 0, err
+		}
+		return len(p), nil
+	}
+
+	if off == fileSize {
+		return f.doAppend(ctx, p)
+	}
+	if off < fileSize {
+		return 0, ErrPartialWriteNotSupported
+	}
+	return 0, fmt.Errorf("seaweedfs: WriteAt beyond EOF (off=%d, size=%d) not supported", off, fileSize)
+}
+
+// doAppend 执行追加写。优先走 Filer ?op=append；命中"小文件不支持"限制或 Filer 不可用时回退 RMW。
+func (f *SeaweedFSFile) doAppend(ctx context.Context, p []byte) (int, error) {
+	if f.fs.fc.available() {
+		isSmall, err := f.fs.fc.append(ctx, f.fs.bucket, f.name, p)
+		switch {
+		case err == nil:
+			return len(p), nil
+		case isSmall:
+			// 命中小文件限制，回退
+		default:
+			return 0, err
+		}
+	}
+	return f.appendViaRMW(ctx, p)
+}
+
+// appendViaRMW 用 read-modify-write 实现追加：读全文件 → 拼接新数据 → PutObject 覆盖。
+func (f *SeaweedFSFile) appendViaRMW(ctx context.Context, p []byte) (int, error) {
+	var existing []byte
+	if f.fs.fc.available() {
+		b, err := f.fs.fc.readAll(ctx, f.fs.bucket, f.name)
+		if err != nil {
+			return 0, fmt.Errorf("seaweedfs: rmw read failed: %w", err)
+		}
+		existing = b
+	} else {
+		// Filer 不可用时退化用 S3 GetObject 读取
+		rc, err := f.fs.Open(f.name)
+		if err != nil {
+			return 0, fmt.Errorf("seaweedfs: rmw read failed: %w", err)
+		}
+		b, err := io.ReadAll(rc)
+		_ = rc.Close()
+		if err != nil {
+			return 0, fmt.Errorf("seaweedfs: rmw read failed: %w", err)
+		}
+		existing = b
+	}
+
+	combined := append(existing, p...)
+	_, err := f.fs.cl.PutObject(ctx, f.fs.bucket, f.name, bytes.NewReader(combined), int64(len(combined)), minio.PutObjectOptions{})
+	if err != nil {
+		return 0, fmt.Errorf("seaweedfs: rmw write failed: %w", err)
+	}
+	return len(p), nil
 }

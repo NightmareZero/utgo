@@ -18,6 +18,7 @@ var _ fio.IFileBucket = &SeaweedFSFileBucket{}
 type SeaweedFSFileBucket struct {
 	fs     *SeaweedFSFileSystem
 	cl     *minio.Client
+	fc     *filerClient
 	bucket string
 }
 
