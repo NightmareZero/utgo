@@ -7,10 +7,16 @@ import (
 	"encoding/hex"
 	"errors"
 	"io"
+	"sync"
+	"time"
 )
 
 var (
 	random1 = rand.Reader
+
+	v7Mu     sync.Mutex // uuidV7 时间与计数器锁
+	v7LastMs int64      // uuidV7 上次使用的时间戳(毫秒)
+	v7Serial uint16     // uuidV7 同毫秒内计数器
 )
 
 type uuid [16]byte
@@ -88,6 +94,46 @@ func UuidV1() (mu uuid) {
 	binary.BigEndian.PutUint16(mu[8:], seq)
 
 	setNodeInterface(mu[10:])
+
+	return
+}
+
+// 生成uuidV7需要的16位byte数 (RFC 9562: 48bit 毫秒时间戳 + 12bit 计数 + 62bit 随机)
+func UuidV7() (r uuid) {
+	io.ReadFull(random1, r[:])
+
+	now := time.Now().UnixMilli()
+
+	v7Mu.Lock()
+	if now <= v7LastMs {
+		now = v7LastMs
+		v7Serial++
+		if v7Serial > 0x0fff {
+			// 当前毫秒计数用尽，等待时间轮转
+			for now <= v7LastMs {
+				now = time.Now().UnixMilli()
+			}
+			v7LastMs = now
+			v7Serial = 0
+		}
+	} else {
+		v7LastMs = now
+		v7Serial = 0
+	}
+	serial := v7Serial
+	v7Mu.Unlock()
+
+	r[0] = byte(now >> 40)
+	r[1] = byte(now >> 32)
+	r[2] = byte(now >> 24)
+	r[3] = byte(now >> 16)
+	r[4] = byte(now >> 8)
+	r[5] = byte(now)
+
+	r[6] = 0x70 | byte(serial>>8) // Version 7
+	r[7] = byte(serial)
+
+	r[8] = (r[8] & 0x3f) | 0x80 // Variant is 10
 
 	return
 }
